@@ -1,4 +1,10 @@
-# VEKTOR Windows 1.3.2
+# VEKTOR Windows 1.3.3
+
+## Układ ustawień 1.3.3
+- Diagnostyka przeniesiona obok formularza modelu, bez duplikatu na dole strony. Prawa kolumna zawiera też bezpieczeństwo i podsumowanie wybranej konfiguracji.
+- Jednolite odstępy 24 px pomiędzy głównymi sekcjami ustawień.
+- Naprawiono dziedziczenie układu formularza chatu przez Limity zadania. Równe karty pól w dwóch kolumnach, osobne opcje bezpieczeństwa i pasek zapisu; na wąskim ekranie jedna kolumna.
+- 26 testów UI PASS i build TypeScript/Vite PASS. Pomiar w przeglądarce potwierdził odstępy 24 px i brak poziomego overflow pól.
 
 ## Limity 1.3.2
 - Jedna sekcja „Limity zadania”: Limit rund modelu i Limit operacji narzędziowych, z opisami oraz przykładem różnicy.
