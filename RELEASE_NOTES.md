@@ -1,4 +1,10 @@
-# VEKTOR Windows 1.3.0
+# VEKTOR Windows 1.3.1
+
+## Interfejs 1.3.1
+- „Od VEKTORA” jako centrum powiadomień w osobnym, przestronnym oknie. Kompaktowy przycisk z dzwonkiem nie rozwija listy wewnątrz nawigacji.
+- Filtry wiadomości, odrębna karta sugestii, czytelne podglądy bez surowego Markdown, rozwijana pełna treść i przejście do rozmowy.
+- Przewijana zawartość, stały nagłówek, responsywny układ i zamykanie Escape z powrotem fokusu.
+- 24 testy UI PASS, TypeScript/Vite build PASS. Bez zmian w backendzie personalizacji.
 
 ## Personalizacja 1.3
 - Opcjonalna pamięć krótkich deklaracji i preferencji z nowych interakcji; profile i liczniki rodzajów zadań izolowane między projektami. Bez śledzenia całego komputera, bez trenowania modelu. Usuwanie profilu oraz wyłącznik używania automatycznej pamięci.
