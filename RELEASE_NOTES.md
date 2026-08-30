@@ -1,4 +1,15 @@
-# VEKTOR Windows 1.1.0
+# VEKTOR Windows 1.2.0
+
+## Zmiany 1.2
+- Eksplorator projektu: drzewo folderów, podgląd kodu i obrazów, pobieranie oraz dodawanie/przeciąganie plików do chatu.
+- Centrum wyników z filtrami, miniaturami i przejściem do rozmowy źródłowej.
+- Podgląd Przed/Po przed zatwierdzeniem write_file, append_file i copy_file. Konflikt z późniejszą zmianą pliku blokuje zapis. Pełny dostęp pomija zgody; shell/Python/MCP nie są przechwytywane przez ten mechanizm.
+- Trwała kolejka per chat: edycja prompta, przeciąganie/strzałki kolejności, pauza, wznowienie i anulowanie. Osobny status oczekiwania.
+- Kopia ZIP instrukcji, rozmów, pamięci, wiedzy i plików; import do nowego projektu. Limit 100 MB. Bez logowań, konfiguracji MCP, aktywnych zgód/zadań, automatyzacji i prywatnego magazynu załączników. Treści projektu mogą zawierać prywatne informacje — ostrzeżenie przed eksportem.
+- Konfigurowalny czas zadania (0 = bez limitu), liczba wywołań i powtórzeń, tryb tylko odczyt niezależny od pełnego dostępu.
+- Źródła z datą dostępu w weryfikacji: odróżnienie odczytanej strony od znalezionego linku. To ślad dowodowy, nie gwarancja prawdziwości odpowiedzi.
+- Duży popup zarządzania projektami z osobnym edytorem i stale widocznym paskiem akcji.
+- Walidacja aplikacji: 106 testów backendu, 19 testów UI, build produkcyjny, rzeczywisty GLM z akceptacją pliku, edytowaną kolejką po odświeżeniu oraz eksport/import w Dockerze.
 
 ## Zmiany 1.1
 - Kolejka promptów w poszczególnych chatach; oczekujące prompty nie trafiają przedwcześnie do kontekstu modelu.
