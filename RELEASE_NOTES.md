@@ -1,4 +1,13 @@
-# VEKTOR Windows 1.6.1 — podgląd i jawna edycja projektów
+# VEKTOR Windows 1.6.2 — kompaktowy wybór modelu w chacie
+
+- Selektor modelu nie rozciąga się już na wolną szerokość pola prompta. Pole modelu ma 214 px, cały zestaw z trybem i odświeżaniem — maksymalnie 440 px. Na węższym ekranie kontrolki zawijają się; długie nazwy są skracane wizualnie, a pełna nazwa pozostaje w podpowiedzi i na liście.
+- Usunięto stały dopisek o przekazywaniu obrazów przez Flash/Vision i pusty wiersz pod selektorem. Automatyczna analiza obrazów i wybór specjalisty pozostają bez zmian.
+- Nadal widoczne są potrzebne komunikaty: wczytywanie, zapis, błędy, brak obsługi narzędzi oraz wpływ zmiany modelu na następny prompt.
+- 103 testy UI PASS oraz produkcyjny build TypeScript/Vite. Regresje obejmują brak dopisku i pustego wiersza, komunikaty, długie nazwy, ograniczenie szerokości, wybór i zapisywanie modelu.
+- Testy backendu: Windows 359 PASS / 1 SKIP, docelowy obraz Linux 342 PASS / 18 SKIP; testy instalatora PowerShell 5.1 PASS.
+- Aktualizacja nie zmienia danych, uprawnień ani konfiguracji modeli. Dostępna przez mechanizm aktualizacji VEKTORA.
+
+## VEKTOR Windows 1.6.1 — podgląd i jawna edycja projektów
 
 - Nazwa i instrukcje istniejącego projektu są domyślnie tylko do odczytu. Tekst nadal można zaznaczyć i skopiować.
 - Dopiero przycisk **Edytuj** na karcie projektu lub pod formularzem odblokowuje pola. Zapis ponownie włącza podgląd; **Anuluj edycję** odtwarza zapisane wartości bez wysyłania zmian.

@@ -1,7 +1,7 @@
 {
-  "version": "1.6.1",
+  "version": "1.6.2",
   "updateProtocol": 1,
-  "agentImage": "gartom91/local-ai-agent:1.6.1@sha256:488e719914b7c6d292721c89db7ac2b10fb04902847a141bea543788cc48adbe",
+  "agentImage": "gartom91/local-ai-agent:1.6.2@sha256:fe77ec05f3b1ce1facef86680e64f81bd7673a0932b4382251066e0b24bbb7b0",
   "ollamaImage": "ollama/ollama:0.33.2@sha256:020e4134285e2ef4d8fd801234176de3b4faadc992a3eb06c8e66a2f9d4c4ba2",
   "cloudModel": "glm-5.3:cloud",
   "visionModel": "glm-5.3-flash:cloud",
