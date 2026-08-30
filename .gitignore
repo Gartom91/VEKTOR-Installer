@@ -1,0 +1,10 @@
+bin/
+obj/
+dist/
+build/
+.venv/
+*.spec
+payload/VEKTOR-Host.exe
+payload.zip
+__pycache__/
+*.pyc
