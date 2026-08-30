@@ -1,4 +1,16 @@
-# VEKTOR Windows 1.3.5
+# VEKTOR Windows 1.4.0
+
+## VEKTOR Office 1.4.0
+- Tworzenie i edycja Word DOCX, Excel XLSX, PowerPoint PPTX i PDF przez pakiet `office-suite`.
+- Przeliczanie formuł Excela, natywne wykresy, notatki prelegenta PowerPoint, firmowe kolory/logo i szablony.
+- Lokalny render LibreOffice/Poppler i OCR polski/angielski w obrazie Docker. Nie wymaga instalacji Microsoft Office.
+- Graficzny podgląd stron/slajdów przy artefakcie w chacie i bibliotece, pobieranie oraz przygotowanie prośby o poprawki.
+- Rozdzielone wyniki kontroli struktury, renderowania i rzeczywistego przeglądu vision. Brak vision nie jest przedstawiany jako pozytywna ocena.
+- PDF: eksport, łączenie, wybór stron, wypełnianie istniejących formularzy. Oryginały są zachowywane, zapis korzysta z historii wersji i ochrony przed konfliktami.
+- Kontrole bezpieczeństwa: ścieżki projektu, limity wielkości, blokowanie makr/ActiveX i zewnętrznych powiązań. Lokalne renderowanie działa także bez sieci.
+- Limity: 10 MB/plik, 100 stron renderu, 24 strony podglądu, 6 stron przeglądu vision, 10 stron OCR; brak gwarancji pełnej zgodności zaawansowanych szablonów Microsoft Office.
+- Naprawa kart artefaktów po ręcznej zgodzie oraz kolejności FIFO przy identycznych znacznikach czasu promptów.
+- 146 testów backendu i 32 testy UI PASS; render/formuły/OCR dodatkowo sprawdzone w kontenerze offline. Test chatu utworzył PPTX po ręcznej zgodzie i wykonał rzeczywisty przegląd vision.
 
 ## Ikona VEKTORA 1.3.5
 - Wybrany turkusowy znak V ze strzałką w interfejsie, faviconie oraz manifeście aplikacji.

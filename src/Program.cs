@@ -40,7 +40,7 @@ sealed class SetupWindow : Form
 
     public SetupWindow()
     {
-        Text = "VEKTOR — instalator Windows 1.3.5"; Width = 900; Height = 700; MinimumSize = new Size(760, 620);
+        Text = "VEKTOR — instalator Windows 1.4.0"; Width = 900; Height = 700; MinimumSize = new Size(760, 620);
         Icon = System.Drawing.Icon.ExtractAssociatedIcon(Application.ExecutablePath);
         StartPosition = FormStartPosition.CenterScreen; Font = new Font("Segoe UI", 10); BackColor = Color.FromArgb(17, 26, 39); ForeColor = Color.Gainsboro;
         var layout = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(24), ColumnCount = 1, RowCount = 10 };
