@@ -6,8 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>VEKTOR-Setup</AssemblyName>
-    <Version>1.3.4</Version>
+    <Version>1.3.5</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>../payload/vektor-app-v1.ico</ApplicationIcon>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>

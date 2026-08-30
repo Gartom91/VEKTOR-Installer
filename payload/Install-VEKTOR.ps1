@@ -119,7 +119,7 @@ try {
     $shortcut = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'VEKTOR.lnk'))
     $shortcut.TargetPath = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
     $shortcut.Arguments = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$(Join-Path $InstallDir 'Start-VEKTOR.ps1')`""
-    $shortcut.WorkingDirectory = $InstallDir; $shortcut.Description = 'VEKTOR - asystent AI'; $shortcut.IconLocation = 'shell32.dll,14'; $shortcut.Save()
+    $shortcut.WorkingDirectory = $InstallDir; $shortcut.Description = 'VEKTOR - asystent AI'; $shortcut.IconLocation = "$(Join-Path $InstallDir 'vektor-app-v1.ico'),0"; $shortcut.Save()
     if ($config.Autostart) {
         $key = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
         New-Item -Path $key -Force | Out-Null

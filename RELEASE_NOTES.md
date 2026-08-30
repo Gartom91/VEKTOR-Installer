@@ -1,4 +1,10 @@
-# VEKTOR Windows 1.3.4
+# VEKTOR Windows 1.3.5
+
+## Ikona VEKTORA 1.3.5
+- Wybrany turkusowy znak V ze strzałką w interfejsie, faviconie oraz manifeście aplikacji.
+- Wielorozmiarowa ikona Windows (16–256 px) dla skrótu na pulpicie i instalatora. Instalacja zachowuje ikonę we własnym katalogu.
+- Przezroczyste PNG, wariant kafelkowy dla Windows i osobny znak dla małych rozmiarów.
+- 29 testów UI PASS, build PASS, zasoby serwowane z poprawnymi typami MIME.
 
 ## Korekty ustawień i połączenia 1.3.4
 - Prawa kolumna nie rozciąga już formularza modelu. Odstęp do następnej sekcji pozostaje 24 px; dłuższa zawartość po prawej przewija się niezależnie, a na wąskim ekranie układa pod formularzem.
