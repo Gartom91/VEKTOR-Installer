@@ -7,12 +7,16 @@ import secrets
 import subprocess
 import tempfile
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
+from pydantic import ConfigDict
+
+from .updater import PROTOCOL, UpdateError, UpdateManager
 
 
 class PathRequest(BaseModel):
@@ -65,11 +69,37 @@ def authorize(authorization: str = Header(default="")) -> None:
         raise HTTPException(401, "Invalid host broker credential")
 
 
+def authorize_host_tools(authorization: str = Header(default="")) -> None:
+    authorize(authorization)
+    if os.environ.get("HOST_BROKER_TOOLS_ENABLED", "true").lower() != "true":
+        raise HTTPException(403, "Windows tools are disabled; this module only manages updates and diagnostics")
+
+
+@asynccontextmanager
+async def lifespan(application):
+    application.state.updater = None
+    application.state.updater_error = "Uruchom VEKTORA ze skrótu, aby skonfigurować aktualizacje."
+    root = os.environ.get("VEKTOR_INSTALL_ROOT")
+    if root and os.environ.get("HOST_BROKER_TOKEN"):
+        try:
+            updater = UpdateManager(Path(root), os.environ.get("VEKTOR_APP_URL", "http://127.0.0.1:8765"), os.environ["HOST_BROKER_TOKEN"])
+            updater.start()
+            application.state.updater = updater
+        except Exception as exc:
+            application.state.updater_error = str(exc) if isinstance(exc, UpdateError) else "Nie można uruchomić modułu aktualizacji. Sprawdź pliki instalacji."
+    try:
+        yield
+    finally:
+        if application.state.updater:
+            application.state.updater.stop()
+
+
 app = FastAPI(
     title="Local Agent Windows Host Broker",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
+    lifespan=lifespan,
 )
 
 
@@ -80,6 +110,9 @@ def health() -> dict[str, Any]:
         "platform": os.name,
         "configured_root_count": len(configured_roots()),
         "elevation": "per-request-uac",
+        "update_protocol": PROTOCOL,
+        "updates_enabled": bool(getattr(app.state, "updater", None)),
+        "host_tools_enabled": os.environ.get("HOST_BROKER_TOOLS_ENABLED", "true").lower() == "true",
     }
 
 
@@ -103,7 +136,7 @@ def system_metrics() -> dict[str, Any]:
     return metrics
 
 
-@app.post("/v1/filesystem/list", dependencies=[Depends(authorize)])
+@app.post("/v1/filesystem/list", dependencies=[Depends(authorize_host_tools)])
 def list_directory(body: PathRequest) -> dict[str, Any]:
     path = resolve_host_path(body.path)
     if not path.is_dir():
@@ -131,7 +164,7 @@ def list_directory(body: PathRequest) -> dict[str, Any]:
     return {"path": str(path), "entries": entries, "truncated": len(entries) >= 2000}
 
 
-@app.post("/v1/filesystem/read", dependencies=[Depends(authorize)])
+@app.post("/v1/filesystem/read", dependencies=[Depends(authorize_host_tools)])
 def read_file(body: PathRequest) -> dict[str, Any]:
     path = resolve_host_path(body.path)
     if not path.is_file():
@@ -149,7 +182,7 @@ def read_file(body: PathRequest) -> dict[str, Any]:
         raise HTTPException(403, f"Windows denied file access: {exc}") from exc
 
 
-@app.post("/v1/filesystem/write", dependencies=[Depends(authorize)])
+@app.post("/v1/filesystem/write", dependencies=[Depends(authorize_host_tools)])
 def write_file(body: WriteRequest) -> dict[str, Any]:
     path = resolve_host_path(body.path)
     if path.exists() and not body.overwrite:
@@ -164,7 +197,7 @@ def write_file(body: WriteRequest) -> dict[str, Any]:
         raise HTTPException(403, f"Windows denied file write: {exc}") from exc
 
 
-@app.post("/v1/filesystem/info", dependencies=[Depends(authorize)])
+@app.post("/v1/filesystem/info", dependencies=[Depends(authorize_host_tools)])
 def file_info(body: PathRequest) -> dict[str, Any]:
     path = resolve_host_path(body.path)
     try:
@@ -181,7 +214,7 @@ def file_info(body: PathRequest) -> dict[str, Any]:
         raise HTTPException(403, f"Windows denied metadata access: {exc}") from exc
 
 
-@app.post("/v1/desktop/screenshot", dependencies=[Depends(authorize)])
+@app.post("/v1/desktop/screenshot", dependencies=[Depends(authorize_host_tools)])
 def desktop_screenshot() -> dict[str, Any]:
     if os.name != "nt":
         raise HTTPException(501, "Desktop capture is available only on Windows")
@@ -212,7 +245,7 @@ $graphics.Dispose(); $bitmap.Dispose()
         output.unlink(missing_ok=True)
 
 
-@app.post("/v1/desktop/action", dependencies=[Depends(authorize)])
+@app.post("/v1/desktop/action", dependencies=[Depends(authorize_host_tools)])
 def desktop_action(body: DesktopActionRequest) -> dict[str, Any]:
     if os.name != "nt":
         raise HTTPException(501, "Desktop control is available only on Windows")
@@ -247,7 +280,7 @@ if($action -in @('type','keypress')){{$t=[Text.Encoding]::Unicode.GetString([Con
     return {"performed": body.action, "x": body.x, "y": body.y}
 
 
-@app.post("/v1/elevated/execute", dependencies=[Depends(authorize)])
+@app.post("/v1/elevated/execute", dependencies=[Depends(authorize_host_tools)])
 def elevated_execute(body: ElevatedRequest) -> dict[str, Any]:
     if os.name != "nt":
         raise HTTPException(501, "Elevation is available only from the Windows host broker")
@@ -304,3 +337,57 @@ $result | ConvertTo-Json -Compress | Set-Content -LiteralPath '{str(result_path)
         return result
     finally:
         result_path.unlink(missing_ok=True)
+
+
+class UpdaterSettings(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    auto_check: bool | None = None
+    auto_install: bool | None = None
+    interval_hours: int | None = Field(None, ge=1, le=168)
+    idle_minutes: int | None = Field(None, ge=1, le=120)
+
+
+class InstallUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    confirmed: bool
+
+
+def update_service():
+    manager = getattr(app.state, "updater", None)
+    if not manager:
+        raise HTTPException(503, getattr(app.state, "updater_error", "Moduł aktualizacji nie jest skonfigurowany."))
+    return manager
+
+
+def update_action(action):
+    try:
+        return action()
+    except UpdateError as exc:
+        raise HTTPException(409, str(exc)) from None
+
+
+@app.get("/v1/updates", dependencies=[Depends(authorize)])
+def update_status():
+    return update_service().status()
+
+
+@app.patch("/v1/updates/settings", dependencies=[Depends(authorize)])
+def update_settings(body: UpdaterSettings):
+    return update_action(lambda: update_service().configure(body.model_dump(exclude_none=True)))
+
+
+@app.post("/v1/updates/check", dependencies=[Depends(authorize)])
+def check_update():
+    return update_action(lambda: update_service().request_check())
+
+
+@app.post("/v1/updates/install", dependencies=[Depends(authorize)])
+def install_update(body: InstallUpdate):
+    if not body.confirmed:
+        raise HTTPException(400, "Potwierdź instalację aktualizacji.")
+    return update_action(lambda: update_service().request_install())
+
+
+@app.post("/v1/updates/cancel", dependencies=[Depends(authorize)])
+def cancel_update():
+    return update_action(lambda: update_service().cancel())

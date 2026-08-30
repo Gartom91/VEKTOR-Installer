@@ -17,5 +17,6 @@ try {
     & dotnet publish src/VEKTOR.Setup.csproj -c Release -r win-x64 -o dist/setup
     if ($LASTEXITCODE) { throw 'dotnet publish failed.' }
     Copy-Item -LiteralPath dist/setup/VEKTOR-Setup.exe -Destination dist/VEKTOR-Setup-x64.exe -Force
-    Get-FileHash dist/VEKTOR-Setup-x64.exe -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  VEKTOR-Setup-x64.exe" } | Set-Content dist/SHA256SUMS.txt -Encoding ascii
+    Copy-Item -LiteralPath payload/release.json -Destination dist/release.json -Force
+    Get-FileHash dist/VEKTOR-Setup-x64.exe,dist/release.json -Algorithm SHA256 | ForEach-Object { "$($_.Hash.ToLower())  $([IO.Path]::GetFileName($_.Path))" } | Set-Content dist/SHA256SUMS.txt -Encoding ascii
 } finally { Pop-Location }

@@ -10,6 +10,7 @@ param(
 . (Join-Path $PSScriptRoot 'Common.ps1')
 $lock = New-Object Threading.Mutex($false, 'Local\VEKTOR.DesktopInstaller')
 $ownsLock = $false
+$composeOperation = $null
 try {
     try { $ownsLock = $lock.WaitOne(0) } catch [Threading.AbandonedMutexException] { $ownsLock = $true }
     if (-not $ownsLock) { throw 'Inna instalacja VEKTORA jest w toku.' }
@@ -33,8 +34,18 @@ try {
     $configPath = Join-Path $InstallDir 'installation.json'
     if ((Test-Path -LiteralPath $InstallDir) -and -not (Test-Path -LiteralPath $configPath) -and @(Get-ChildItem -LiteralPath $InstallDir -Force).Count -gt 0) { throw 'Wybierz pusty folder albo istniejaca instalacje VEKTORA.' }
     New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
+    $composeOperation = Enter-VektorComposeOperation $InstallDir
     $config = if (Test-Path -LiteralPath $configPath) { Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json } else { $null }
-    if ($config -and $config.HostEnabled) {
+    $managedPin = Get-ManagedUpdatePin $InstallDir
+    $incoming = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release.json') -Raw | ConvertFrom-Json
+    if ($managedPin -match '^gartom91/local-ai-agent:([0-9]+\.[0-9]+\.[0-9]+)@' -and [version]$Matches[1] -gt [version]$incoming.version) { throw 'Zainstalowana wersja jest nowsza. Pobierz aktualny instalator.' }
+    if (Test-Path -LiteralPath (Join-Path $InstallDir 'data\updater\transaction.json')) { throw 'Poprzednia automatyczna aktualizacja wymaga dokonczenia. Uruchom VEKTORA i sprawdz Ustawienia / Aktualizacje przed uruchomieniem instalatora.' }
+    $updateState = Join-Path $InstallDir 'data\updater\status.json'
+    if (Test-Path -LiteralPath $updateState) {
+        $updatePhase = (Get-Content -LiteralPath $updateState -Raw | ConvertFrom-Json).phase
+        if ($updatePhase -in @('checking','downloading','backing_up','installing','verifying','rolling_back','recovery_required')) { throw 'Automatyczna aktualizacja jeszcze pracuje. Poczekaj na jej zakonczenie przed uruchomieniem instalatora.' }
+    }
+    if ($config) {
         $pidFile = Join-Path $InstallDir 'broker.pid'
         if (Test-Path -LiteralPath $pidFile) {
             $running = Get-Process -Id ([int](Get-Content -LiteralPath $pidFile)) -ErrorAction SilentlyContinue
@@ -93,6 +104,9 @@ try {
     $envText = @("VEKTOR_IMAGE=$($release.agentImage)", "OLLAMA_IMAGE=$($release.ollamaImage)", "VEKTOR_PORT=$($config.Port)", "BROKER_PORT=$($config.BrokerPort)", "BROKER_TOKEN=$token", "HOST_ENABLED=$(([string]$config.HostEnabled).ToLowerInvariant())", "VEKTOR_WORKSPACE=$($config.Workspace.Replace('\','/'))", "LOCAL_MODEL=$($config.Model)", "LOCAL_CONTEXT=$($config.Context)", "CLOUD_MODEL=$($release.cloudModel)", "STRONG_MODEL=$($release.strongModel)", "VISION_MODEL=$($release.visionModel)", 'VISION_AUTO=true', 'VISION_FOLLOWUP_LIMIT=2', 'MODEL_MODE=auto') -join "`n"
     Write-PrivateFile $envPath $envText
     Write-PrivateFile $configPath ($config | ConvertTo-Json)
+    # A previous automatic pin must not silently override the newer installer.
+    # Preserve the old pin, and never overwrite a custom Compose override.
+    Set-InstallerUpdatePin $InstallDir $release.agentImage
     $compose = Get-ComposeArguments $InstallDir $config
     $running = Invoke-Checked $docker ($compose + @('ps', '-q', '--status', 'running', 'agent')) -Timeout 30 -AllowFailure
     if ($running.ExitCode -eq 0 -and $running.Output.Trim()) {
@@ -128,4 +142,4 @@ try {
     }
     Write-Host "GOTOWE: http://127.0.0.1:$($config.Port). Logowanie cloud: Cloud-Login.ps1. Dane i modele zachowane w woluminach vektor-desktop."
 } catch { Write-Host "ERROR: $($_.Exception.Message)"; Write-Host $_.ScriptStackTrace; exit 1 }
-finally { if ($ownsLock) { $lock.ReleaseMutex() }; $lock.Dispose() }
+finally { if ($composeOperation) { $composeOperation.ReleaseMutex(); $composeOperation.Dispose() }; if ($ownsLock) { $lock.ReleaseMutex() }; $lock.Dispose() }

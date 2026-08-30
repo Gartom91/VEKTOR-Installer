@@ -1,4 +1,23 @@
-# VEKTOR Windows 1.5.0
+# VEKTOR Windows 1.6.0 — automatyczne aktualizacje
+
+- Nowy panel **Ustawienia → Aktualizacje VEKTORA**, wspólny dla wszystkich projektów. Domyślnie sprawdzanie stabilnych wydań co 6 godzin i instalowanie po 5 minutach bezczynności. Obie opcje oraz czasy można zmienić; ręczna instalacja ma potwierdzenie.
+- Aktualizacja czeka na zakończenie zadań, kolejki, zgód i bieżących operacji wszystkich projektów. Pobieranie obrazu nie blokuje pracy. Dostępne pomijanie wydania, etapy postępu i historia.
+- Weryfikacja SHA256 manifestu GitHub i obrazu Docker, kontrola wersji/protokołu. Wyłącznie oficjalne stabilne wydania; bez uruchamiania pobranych skryptów i bez gniazda Dockera w aplikacji.
+- Kopie wszystkich baz SQLite oraz plików woluminu danych przed zmianą. Pomijany jest wyłącznie cache i procesowy katalog tymczasowy Codexa; logowania, sesje i właściwe dane są zachowane. Kontrola nowej wersji, rozmów i zachowanych plików. Przy błędzie powrót do poprzedniego obrazu oraz kopii; wadliwe wydanie nie jest ponawiane automatycznie.
+- Trwały dziennik pozwala dokończyć przerwaną aktualizację. Zagubiona odpowiedź HTTP po zakończeniu nie cofa późniejszej pracy. Wygasła blokada, uszkodzenie danych lub niedziałający Docker mogą wymagać ręcznej diagnostyki — updater nie odtwarza starej kopii na niepewnym stanie.
+- Moduł Windows startuje ze skrótu także z wyłączonym dostępem do pulpitu/plików. Diagnostyka i aktualizacje nie włączają pełnego dostępu. Przypięta wersja przetrwa kolejne uruchomienie; nowszy instalator zachowuje kopię dotychczasowego przypięcia i odrzuca niestandardowy override. Skrót, instalator i updater mają wspólną blokadę, aby uruchomienie okna nie przerwało przywracania danych.
+- Po aktualizacji użytkownik decyduje o odświeżeniu UI. Szkic prompta i załączniki są zachowane; niezapisane pozostałe formularze należy zapisać przed odświeżeniem.
+- Docker Desktop, Ollama, pobrane modele i sam moduł Windows nie są automatycznie wymieniane. Nowy protokół hosta wymaga instalatora. Kopie pozostają do ręcznego przeglądu; wymagają wolnego miejsca. Zewnętrzne workspace pozostają nietknięte.
+
+## Weryfikacja 1.6.0
+
+- UI: 87 testów PASS i build TypeScript/Vite. Backend Windows: 359 PASS / 1 SKIP. Linux: 342 PASS / 18 SKIP (integracje Windows testowane osobno). Testy instalatora wykonane lokalnie; pipeline ponownie sprawdza pakiet EXE. Wspólną blokadę sprawdzono między rzeczywistymi procesami PowerShell 5.1 i modułu aktualizacji.
+- Naprawa przy starcie historycznych statusów „oczekiwanie na zgodę”, pozostawionych przez starszy mechanizm bez trwałych zadań: wyłącznie gdy wszystkie istniejące zgody są już rozstrzygnięte, a rozmowa nie ma żadnego zadania w rejestrze. Status zmienia się na „przerwane”, z audytem; nie oznaczamy zadania jako pomyślnie ukończonego. Faktycznie oczekujące zgody pozostają bez zmian.
+- Rzeczywista próba na osobnej instancji Docker z trzema syntetycznymi projektami: odłożenie przy pracy w innym projekcie, zamiana obrazu, kontrola kopii i zachowanie workspace. Celowe usunięcie testowej wiadomości oraz uszkodzenie testowego pliku logowania wywołały rzeczywisty rollback obrazu i odtworzenie danych. Produkcyjnych danych nie użyto do symulacji awarii.
+- Test poprzedniej wersji korzystał z obrazu testowego zawierającego protokół aktualizacji 1. Aktualizacja starszych instalacji bez protokołu wymaga jednorazowego uruchomienia tego instalatora. Nie deklarujemy sprawdzenia każdego komputera Windows ani każdej przyszłej migracji.
+- Instalator online, Windows x64, bez komercyjnego podpisu Authenticode. Nie wyłączaj SmartScreen. Zaloguj się samodzielnie do usług cloud; wydanie nie zawiera tokenów autora.
+
+## VEKTOR Windows 1.5.0
 
 ## Hybrydowy model główny i Vision
 

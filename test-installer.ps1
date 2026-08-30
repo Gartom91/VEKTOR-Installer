@@ -23,6 +23,7 @@ $listener = New-Object Net.Sockets.TcpListener([Net.IPAddress]::Loopback, 29700)
 try { if ((Get-FreePort 29700) -eq 29700) { throw 'Port detection failed' } } finally { $listener.Stop() }
 $release = Get-Content payload/release.json -Raw | ConvertFrom-Json
 if ($release.agentImage -notmatch '@sha256:[a-f0-9]{64}$' -or $release.ollamaImage -notmatch '@sha256:[a-f0-9]{64}$') { throw 'Images must be pinned by digest' }
+if ($release.updateProtocol -ne 1) { throw 'Update protocol missing from the release manifest.' }
 if ((Get-Content payload/compose.yaml -Raw) -notmatch 'OLLAMA_MAX_LOADED_MODELS: "1"') { throw 'Local model limit missing' }
 if ($release.cloudModel -ne 'glm-5.3:cloud' -or $release.visionModel -ne 'glm-5.3-flash:cloud') { throw 'Hybrid model defaults missing' }
 $composeText = Get-Content payload/compose.yaml -Raw
@@ -44,3 +45,19 @@ try {
     if ((Get-Content -LiteralPath $privateTest) -ne 'updated') { throw 'Private file update failed' }
 } finally { if (Test-Path -LiteralPath $privateTest) { Remove-Item -LiteralPath $privateTest } }
 Write-Host 'PASS: private ACL create and update without administrator privileges.'
+$pinTest = Join-Path ([IO.Path]::GetTempPath()) ('vektor-pin-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $pinTest | Out-Null
+$pinFile = Join-Path $pinTest 'compose.update.yaml'
+$oldImage = 'gartom91/local-ai-agent:1.5.4@sha256:' + ('a' * 64)
+$newImage = 'gartom91/local-ai-agent:1.6.0@sha256:' + ('b' * 64)
+$header = "# Managed by VEKTOR updater. Data and other services are unchanged.`nservices:`n  agent:`n    image: "
+if (Get-ManagedUpdatePin $pinTest) { throw 'Missing pin should return null.' }
+Write-PrivateFile $pinFile ($header + $oldImage + "`n")
+if ((Get-ManagedUpdatePin $pinTest) -ne $oldImage) { throw 'Managed pin was not parsed.' }
+Set-InstallerUpdatePin $pinTest $newImage
+if ((Get-ManagedUpdatePin $pinTest) -ne $newImage) { throw 'Installer did not override the old automatic image pin.' }
+$savedPins = @(Get-ChildItem -LiteralPath $pinTest -Filter 'compose.update.before-installer-*.yaml')
+if ($savedPins.Count -ne 1 -or -not (Get-Content -LiteralPath $savedPins[0].FullName -Raw).Contains($oldImage)) { throw 'Previous pin backup missing.' }
+Write-PrivateFile $pinFile "services:`n  agent:`n    image: custom`n"
+try { Set-InstallerUpdatePin $pinTest $newImage; throw 'Custom pin was overwritten.' } catch { if ($_.Exception.Message -notlike '*Niestandardowy*') { throw } }
+Write-Host "PASS: automatic image pin survives startup, newer installer preserves/replaces managed pin, custom overrides rejected. Fixture retained: $pinTest"

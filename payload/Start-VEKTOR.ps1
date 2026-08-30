@@ -14,8 +14,11 @@ try {
     if (-not $docker) { throw 'Brak Docker Desktop. Uruchom ponownie instalator VEKTORA.' }
     Wait-Docker $docker
     Start-Broker $InstallDir $config
+    $composeOperation = Enter-VektorComposeOperation $InstallDir
+    try {
     $compose = Get-ComposeArguments $InstallDir $config
-    $null = Invoke-Checked $docker ($compose + @('up', '-d')) -Timeout 300
+    $null = Invoke-Checked $docker ($compose + @('up', '-d', '--no-build')) -Timeout 300
+    } finally { $composeOperation.ReleaseMutex(); $composeOperation.Dispose() }
     $url = "http://127.0.0.1:$($config.Port)"
     $ready = $false
     foreach ($attempt in 1..90) {

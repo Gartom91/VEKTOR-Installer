@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'update-coordination.ps1')
 
 function Find-Docker {
     foreach ($candidate in @((Join-Path $env:LOCALAPPDATA 'Programs\DockerDesktop\resources\bin\docker.exe'), (Join-Path $env:ProgramFiles 'Docker\Docker\resources\bin\docker.exe'))) {
@@ -49,7 +50,29 @@ function Get-FreePort([int]$Preferred) {
 function Get-ComposeArguments([string]$InstallDir, $Config) {
     $result = @('compose', '--project-name', 'vektor-desktop', '--project-directory', $InstallDir, '--env-file', (Join-Path $InstallDir '.env'), '-f', (Join-Path $InstallDir 'compose.yaml'))
     if ($Config.GPU) { $result += @('-f', (Join-Path $InstallDir 'compose.gpu.yaml')) }
+    if (Get-ManagedUpdatePin $InstallDir) { $result += @('-f', (Join-Path $InstallDir 'compose.update.yaml')) }
     return $result
+}
+
+function Get-ManagedUpdatePin([string]$InstallDir) {
+    $path = Join-Path $InstallDir 'compose.update.yaml'
+    if (-not (Test-Path -LiteralPath $path)) { return $null }
+    if ((Get-Item -LiteralPath $path).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Plik aktualizacji jest dowiazaniem. Wymagana diagnostyka reczna.' }
+    $content = (Get-Content -LiteralPath $path -Raw).Replace("`r`n", "`n")
+    $header = "# Managed by VEKTOR updater. Data and other services are unchanged.`nservices:`n  agent:`n    image: "
+    if (-not $content.StartsWith($header)) { throw 'Niestandardowy compose.update.yaml: nie nadpisze konfiguracji.' }
+    $image = $content.Substring($header.Length).Trim()
+    if ($image -notmatch '^(gartom91/local-ai-agent:(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)@sha256:[a-f0-9]{64}|sha256:[a-f0-9]{64})$') { throw 'Nieprawidlowe przypiecie obrazu aktualizacji.' }
+    return $image
+}
+
+function Set-InstallerUpdatePin([string]$InstallDir, [string]$Image) {
+    if (-not (Get-ManagedUpdatePin $InstallDir)) { return }
+    if ($Image -notmatch '^gartom91/local-ai-agent:[0-9]+\.[0-9]+\.[0-9]+@sha256:[a-f0-9]{64}$') { throw 'Instalator wymaga oficjalnego obrazu z SHA256.' }
+    $path = Join-Path $InstallDir 'compose.update.yaml'
+    $backup = Join-Path $InstallDir ('compose.update.before-installer-' + [guid]::NewGuid().ToString('N') + '.yaml')
+    Copy-Item -LiteralPath $path -Destination $backup
+    Write-PrivateFile $path ("# Managed by VEKTOR updater. Data and other services are unchanged.`nservices:`n  agent:`n    image: " + $Image + "`n")
 }
 
 function Write-PrivateFile([string]$Path, [string]$Content) {
@@ -86,7 +109,7 @@ function Wait-Docker([string]$Docker) {
 }
 
 function Start-Broker([string]$InstallDir, $Config) {
-    if (-not $Config.HostEnabled) { return }
+    # Diagnostics/updater do not grant filesystem, desktop or elevation access.
     $exe = Join-Path $InstallDir 'VEKTOR-Host.exe'
     $pidFile = Join-Path $InstallDir 'broker.pid'
     if (Test-Path -LiteralPath $pidFile) {
@@ -97,6 +120,9 @@ function Start-Broker([string]$InstallDir, $Config) {
     $env:HOST_BROKER_TOKEN = $line.Substring(13)
     $env:HOST_BROKER_PORT = [string]$Config.BrokerPort
     $env:HOST_BROKER_ROOTS = ($Config.HostRoots -join ';')
+    $env:HOST_BROKER_TOOLS_ENABLED = ([string][bool]$Config.HostEnabled).ToLowerInvariant()
+    $env:VEKTOR_INSTALL_ROOT = $InstallDir
+    $env:VEKTOR_APP_URL = "http://127.0.0.1:$($Config.Port)"
     try {
         $child = Start-Process -FilePath $exe -WorkingDirectory $InstallDir -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $InstallDir 'broker-out.log') -RedirectStandardError (Join-Path $InstallDir 'broker-error.log')
         [IO.File]::WriteAllText($pidFile, [string]$child.Id)

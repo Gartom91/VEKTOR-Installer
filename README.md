@@ -8,7 +8,7 @@ Windows 10 22H2 / Windows 11 **x64**, minimum 8 GB RAM (zalecane 16 GB+), wirtua
 
 1. Uruchom EXE, wybierz pusty folder instalacji albo folder wcześniejszej instalacji.
 2. Przeczytaj i zaakceptuj warunki Docker Desktop. Niektóre zastosowania wymagają płatnej licencji producenta.
-3. Opcjonalnie włącz moduł Windows i autostart. Instalator nie włącza pełnego dostępu ani nie zatwierdza automatycznie działań agenta.
+3. Opcjonalnie włącz dostęp agenta do Windows i autostart. Moduł diagnostyki i aktualizacji uruchamia się zawsze ze skrótu. Instalator nie włącza pełnego dostępu ani nie zatwierdza automatycznie działań agenta.
 4. Poczekaj na obrazy i modele. Użyj skrótu **VEKTOR** na pulpicie.
 5. Dla cloud kliknij **Zaloguj do Ollama cloud** i otwórz pokazany adres autoryzacji. Konto i limity są Twoje; instalator nie zawiera tokenów autora.
 6. Obrazy OpenAI: w aplikacji otwórz **Ustawienia → Generowanie obrazów · Codex / ChatGPT**, zaloguj się kodem urządzenia na stronie OpenAI i wybierz dostawcę Codex. Logowanie jest oddzielne od Ollamy i od aplikacji Codex na komputerze. Dotyczy wybranej przestrzeni projektu. Wymaga dostępności obrazów i limitu na Twoim koncie; nie działa w trybie tylko lokalnym.
@@ -33,6 +33,12 @@ VEKTOR i Ollama są dwoma kontenerami jednego projektu Compose `vektor-desktop`,
 
 Rozmowy, projekty, pamięć, konfiguracja i historia plików: wolumin `vektor-desktop_agent-data`. Modele i logowanie Ollamy: `vektor-desktop_ollama-data`. Pliki użytkownika: `workspace` w wybranym folderze. Aktualizacja zachowuje te zasoby i przed wymianą działającego kontenera zapisuje kopię głównej bazy SQLite w `/app/data/backups`.
 
+Od 1.6.0 **Ustawienia → Aktualizacje VEKTORA** oferują automatyczne sprawdzanie stabilnych wydań (domyślnie co 6 godzin) i instalowanie po bezczynności (domyślnie 5 minut). Obie opcje można wyłączyć. Zadania, kolejka i zgody we wszystkich projektach opóźniają restart; można pominąć wydanie albo potwierdzić ręczną instalację.
+
+Automatyczny updater zapisuje kopię **wszystkich** baz i plików woluminu danych w `/app/data/backups/updates/`, weryfikuje SHA256 manifestu GitHub, przypięty obraz i zachowanie danych. Błąd kontroli uruchamia rollback, a nie kolejne próby wadliwego wydania. Po przerwaniu pracy pozostaje dziennik w `data/updater/`. Jeśli wyłączony Docker, wygasła blokada lub uszkodzony dysk uniemożliwiają bezpieczny rollback, updater zatrzymuje się z informacją diagnostyczną. Kopie pozostają do ręcznego przeglądu i zajmują miejsce.
+
+Zmienia się tylko kontener `agent`, bez wymiany Dockera, Ollamy i pobranych modeli. Zewnętrzny workspace pozostaje nietknięty. Moduł Windows wymaga nowszego instalatora przy zmianie protokołu. **Sama aktualizacja nie daje agentowi dostępu do pulpitu/plików ani praw administratora.** Wymagany standardowy nazwany wolumin danych, bez niestandardowych plików Compose/dowiązań. Wydania prerelease i samo przesunięcie Docker `latest` nie uruchamiają aktualizacji.
+
 Użyj nowszego instalatora z tym samym folderem. Ustawienia istniejącej instalacji mają pierwszeństwo przed domyślnymi opcjami kreatora. Nie odinstalowuj Docker Desktop i nie używaj `docker system prune --volumes`, jeśli chcesz zachować dane.
 
 `Uninstall-VEKTOR.ps1` zatrzymuje kontenery i usuwa własny skrót/autostart, zachowując dane, modele i pliki. Opcja `-RemoveData` dodatkowo usuwa **nieodwracalnie** woluminy tego projektu; pliki workspace i instalatora pozostają. To świadoma operacja administracyjna, nie domyślne zachowanie.
@@ -55,6 +61,6 @@ Wymagane .NET 10 SDK i Python 3.12 wyłącznie na komputerze budującym.
 ./test-payload.ps1
 ```
 
-Tag `v*` uruchamia GitHub Actions, buduje instalator, wykonuje testy, zapisuje sumę SHA256 i publikuje artefakty w GitHub Releases. Aktualizacja wersji aplikacji wymaga wcześniejszej publikacji obrazu i zmiany przypiętego digestu w `payload/release.json`.
+Tag `v*` uruchamia GitHub Actions, buduje instalator, wykonuje testy, zapisuje sumy SHA256 i publikuje EXE oraz `release.json` w GitHub Releases. Aktualizacja wersji aplikacji wymaga wcześniejszej publikacji obrazu i zmiany przypiętego digestu w `payload/release.json`; manifest zawiera `updateProtocol: 1`. Repozytoria GitHub i Docker Hub są granicą zaufania wydawcy — SHA256 nie zastępuje niezależnego podpisu kryptograficznego.
 
 Źródła wymagań: [Docker Windows](https://docs.docker.com/desktop/setup/install/windows-install/), [WSL](https://learn.microsoft.com/windows/wsl/install), [Ollama Docker](https://docs.ollama.com/docker), [Ollama cloud](https://docs.ollama.com/cloud).
