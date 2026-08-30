@@ -1,4 +1,10 @@
-# VEKTOR Windows 1.3.3
+# VEKTOR Windows 1.3.4
+
+## Korekty ustawień i połączenia 1.3.4
+- Prawa kolumna nie rozciąga już formularza modelu. Odstęp do następnej sekcji pozostaje 24 px; dłuższa zawartość po prawej przewija się niezależnie, a na wąskim ekranie układa pod formularzem.
+- Podgląd profilu pracy jest rozwijany.
+- Chwilowa utrata połączenia Codex nie pozostawia starego błędu po odzyskaniu łączności i nie prezentuje nieaktualnego stanu jako bieżącego. Obsługa błędów HTTP, walidacja odpowiedzi, timeout i automatyczne ponawianie.
+- 28 testów UI PASS, TypeScript/Vite build PASS. API po restarcie potwierdziło zachowane połączenie ChatGPT. Zmiana nie wymaga ponownego logowania.
 
 ## Układ ustawień 1.3.3
 - Diagnostyka przeniesiona obok formularza modelu, bez duplikatu na dole strony. Prawa kolumna zawiera też bezpieczeństwo i podsumowanie wybranej konfiguracji.
