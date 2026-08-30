@@ -16,9 +16,11 @@ foreach ($key in 'version','agentImage','ollamaImage','cloudModel','visionModel'
 }
 $actualVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($Installer).FileVersion
 if ($actualVersion -notlike "$($expected.version).*") { throw 'Wrong EXE version.' }
-$sourceCompose = (Get-FileHash (Join-Path $PSScriptRoot 'payload\compose.yaml') -Algorithm SHA256).Hash
-$packagedCompose = (Get-FileHash (Join-Path $OutputDir 'compose.yaml') -Algorithm SHA256).Hash
-if ($sourceCompose -ne $packagedCompose) { throw 'Wrong embedded Compose configuration.' }
+# Git checkout on Windows may use CRLF while an edited working copy uses LF.
+# Normalize only line endings, never spaces, case, values or other content.
+$sourceCompose = (Get-Content (Join-Path $PSScriptRoot 'payload\compose.yaml') -Raw).Replace("`r`n", "`n")
+$packagedCompose = (Get-Content (Join-Path $OutputDir 'compose.yaml') -Raw).Replace("`r`n", "`n")
+if ($sourceCompose -cne $packagedCompose) { throw 'Wrong embedded Compose configuration.' }
 $hostExe = (Resolve-Path -LiteralPath (Join-Path $OutputDir 'VEKTOR-Host.exe')).Path
 $listener = New-Object Net.Sockets.TcpListener([Net.IPAddress]::Loopback, 0)
 $listener.Start()
