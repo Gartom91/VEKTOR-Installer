@@ -1,4 +1,15 @@
-# VEKTOR Windows 1.0.0
+# VEKTOR Windows 1.1.0
+
+## Zmiany 1.1
+- Kolejka promptów w poszczególnych chatach; oczekujące prompty nie trafiają przedwcześnie do kontekstu modelu.
+- Diagnostyka w ustawieniach, przestronne zarządzanie projektami, „Bez projektu” i filtrowanie chatów.
+- Poprawiony układ karty i przełącznika pełnego dostępu.
+- Logowanie Codex / ChatGPT kodem urządzenia i natywne generowanie GPT Image 2 przez Codex App Server. CLI w obrazie, prywatne logowanie dla przestrzeni projektu, bez kopiowania tokenów autora.
+- Walidacja: 90 testów backendu, 13 testów UI, rzeczywista kolejka dwóch promptów w tym samym chacie. App Server zwrócił kod logowania. Generowanie obrazu z prywatnego konta wymaga jego autoryzacji i nie jest deklarowane jako potwierdzone tym wydaniem.
+
+Dokumentacja: https://learn.chatgpt.com/docs/app-server oraz https://learn.chatgpt.com/docs/image-generation.
+
+## Podstawa instalatora (walidacja 1.0)
 
 Pierwszy instalator online Windows 10/11 x64: Docker Desktop/WSL2, przypięte obrazy VEKTORA i Ollamy, automatyczny profil sprzętu, lokalny fallback, opcjonalny moduł Windows, skrót i autostart.
 

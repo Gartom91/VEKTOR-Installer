@@ -11,6 +11,9 @@ Windows 10 22H2 / Windows 11 **x64**, minimum 8 GB RAM (zalecane 16 GB+), wirtua
 3. Opcjonalnie włącz moduł Windows i autostart. Instalator nie włącza pełnego dostępu ani nie zatwierdza automatycznie działań agenta.
 4. Poczekaj na obrazy i modele. Użyj skrótu **VEKTOR** na pulpicie.
 5. Dla cloud kliknij **Zaloguj do Ollama cloud** i otwórz pokazany adres autoryzacji. Konto i limity są Twoje; instalator nie zawiera tokenów autora.
+6. Obrazy OpenAI: w aplikacji otwórz **Ustawienia → Generowanie obrazów · Codex / ChatGPT**, zaloguj się kodem urządzenia na stronie OpenAI i wybierz dostawcę Codex. Logowanie jest oddzielne od Ollamy i od aplikacji Codex na komputerze. Dotyczy wybranej przestrzeni projektu. Wymaga dostępności obrazów i limitu na Twoim koncie; nie działa w trybie tylko lokalnym.
+
+Od 1.1 prompty kolejkuje się bezpośrednio w bieżącym chacie. Diagnostyka znajduje się w ustawieniach, a **Bez projektu** zawiera dotychczasowe nieprzypisane rozmowy. Każdy projekt wyświetla wyłącznie swoje chaty.
 
 Program i modele lokalne działają bez instalowania Pythona, Node.js czy .NET na komputerze użytkownika. EXE zawiera runtime .NET oraz skompilowany moduł hosta. Docker i obrazy są pobierane podczas instalacji, więc to instalator **online**, nie offline.
 

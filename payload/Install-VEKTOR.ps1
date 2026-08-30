@@ -76,6 +76,7 @@ try {
     Write-Host 'Oczekiwanie na silnik Docker (do 300 s)...'
     Wait-Docker $docker
     $release = Get-Content -LiteralPath (Join-Path $InstallDir 'release.json') -Raw | ConvertFrom-Json
+    $config.Version = $release.version
     if ($config.GPU) {
         Write-Host 'Test dostepnosci NVIDIA wewnatrz kontenera...'
         $gpu = Invoke-Checked $docker @('run', '--rm', '--gpus', 'all', '--entrypoint', 'nvidia-smi', $release.ollamaImage, '-L') -Timeout 1800 -AllowFailure
