@@ -1,4 +1,14 @@
-# VEKTOR Windows 1.6.0 — automatyczne aktualizacje
+# VEKTOR Windows 1.6.1 — podgląd i jawna edycja projektów
+
+- Nazwa i instrukcje istniejącego projektu są domyślnie tylko do odczytu. Tekst nadal można zaznaczyć i skopiować.
+- Dopiero przycisk **Edytuj** na karcie projektu lub pod formularzem odblokowuje pola. Zapis ponownie włącza podgląd; **Anuluj edycję** odtwarza zapisane wartości bez wysyłania zmian.
+- Wybranie innego projektu i ponowne otwarcie okna nie dziedziczą trybu edycji. Błąd zapisu pozostawia edytowalny szkic. **Nowy projekt** jawnie otwiera pusty formularz do wpisywania.
+- Instrukcje „Bez projektu” również wymagają wybrania edycji; stała nazwa tej przestrzeni pozostaje zablokowana.
+- 94 testy UI PASS oraz poprawny build TypeScript/Vite. Dodano regresje blokady pól, zmiany projektu, zapisu, anulowania, ponownego otwarcia i tworzenia; test nowszego interfejsu nie zależy już od wpisanej na sztywno wersji aplikacji.
+- Testy backendu: Windows 359 PASS / 1 SKIP, docelowy obraz Linux 342 PASS / 18 SKIP; testy instalatora PowerShell 5.1 PASS.
+- Aktualizacja dostępna przez mechanizm wprowadzony w 1.6.0; nie zmienia schematu danych ani uprawnień agenta.
+
+## VEKTOR Windows 1.6.0 — automatyczne aktualizacje
 
 - Nowy panel **Ustawienia → Aktualizacje VEKTORA**, wspólny dla wszystkich projektów. Domyślnie sprawdzanie stabilnych wydań co 6 godzin i instalowanie po 5 minutach bezczynności. Obie opcje oraz czasy można zmienić; ręczna instalacja ma potwierdzenie.
 - Aktualizacja czeka na zakończenie zadań, kolejki, zgód i bieżących operacji wszystkich projektów. Pobieranie obrazu nie blokuje pracy. Dostępne pomijanie wydania, etapy postępu i historia.
