@@ -1,4 +1,9 @@
-# VEKTOR Windows 1.3.1
+# VEKTOR Windows 1.3.2
+
+## Limity 1.3.2
+- Jedna sekcja „Limity zadania”: Limit rund modelu i Limit operacji narzędziowych, z opisami oraz przykładem różnicy.
+- Usunięto stare pole kroków z ustawień modelu. Zapis obu limitów w jednej transakcji, bez zmiany dotychczasowych wartości. Starsze API nadal obsługiwane.
+- Walidacja zakresów i ochrona przed nadpisaniem limitu przez formularz ustawień modelu.
 
 ## Interfejs 1.3.1
 - „Od VEKTORA” jako centrum powiadomień w osobnym, przestronnym oknie. Kompaktowy przycisk z dzwonkiem nie rozwija listy wewnątrz nawigacji.
