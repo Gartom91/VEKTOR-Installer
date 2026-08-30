@@ -1,4 +1,12 @@
-# VEKTOR Windows 1.2.1
+# VEKTOR Windows 1.3.0
+
+## Personalizacja 1.3
+- Opcjonalna pamięć krótkich deklaracji i preferencji z nowych interakcji; profile i liczniki rodzajów zadań izolowane między projektami. Bez śledzenia całego komputera, bez trenowania modelu. Usuwanie profilu oraz wyłącznik używania automatycznej pamięci.
+- Regułowe propozycje kolejnego kroku i wzorce przejść między zadaniami; zawsze wymagają decyzji użytkownika, nie wykonują narzędzi.
+- Spontaniczne propozycje jako trwałe osobne rozmowy: losowy odstęp, godziny ciszy, dzienny limit, brak zaczepek podczas aktywnych zadań.
+- Skrzynka „Od VEKTORA” i opcjonalne powiadomienia pulpitu z fragmentem odpowiedzi i otwarciem rozmowy. Wymagana zgoda przeglądarki i otwarte (także zminimalizowane) okno aplikacji. Bez okna pozostaje trwała skrzynka. Nie deklarujemy testu fizycznego dostarczenia toastu Windows.
+- Domyślnie nowe instalacje mają uczenie, zaczepki i powiadomienia wyłączone. Włącz je w Ustawienia → Pamięć o Tobie i proaktywność. Pamięć wykorzystana w kontekście modelu cloud jest przesyłana do tego dostawcy.
+- Testy UI: 23 PASS; testy backendu i rzeczywiste przywołanie zapisanej preferencji w nowej rozmowie z GLM.
 
 ## Poprawka 1.2.1
 - Wbudowana kontrola integralności obrazów, rzeczywistych wymiarów i SHA256; kontrola składni Python/JSON bez wykonywania plików.
