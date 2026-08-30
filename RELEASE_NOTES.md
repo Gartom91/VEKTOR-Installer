@@ -1,4 +1,11 @@
-# VEKTOR Windows 1.2.0
+# VEKTOR Windows 1.2.1
+
+## Poprawka 1.2.1
+- Wbudowana kontrola integralności obrazów, rzeczywistych wymiarów i SHA256; kontrola składni Python/JSON bez wykonywania plików.
+- Rozróżnienie nierozwiązanych błędów i naprawionej próby z zachowaniem oryginalnego błędu w historii. Niepowiązany sukces nie usuwa wcześniejszej porażki.
+- Agent podejmuje do dwóch dodatkowych prób przeglądu weryfikacji; przy nierozwiązanym błędzie zwraca wynik częściowy zamiast deklaracji sukcesu.
+- Ponowna kontrola artefaktów w panelu weryfikacji; rzeczywiste wymiary obrazów także w rezultacie generatora.
+- Walidacja: 114 testów backendu, 20 testów UI, build produkcyjny i ponowna kontrola rzeczywistej rozmowy z obrazem w Dockerze. Kontrola techniczna nie zastępuje oceny artystycznej ani testu funkcjonalnego programu.
 
 ## Zmiany 1.2
 - Eksplorator projektu: drzewo folderów, podgląd kodu i obrazów, pobieranie oraz dodawanie/przeciąganie plików do chatu.
