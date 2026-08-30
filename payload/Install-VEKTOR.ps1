@@ -90,7 +90,7 @@ try {
     $token = ''
     if (Test-Path -LiteralPath $envPath) { $old = Get-Content -LiteralPath $envPath | Where-Object { $_.StartsWith('BROKER_TOKEN=') }; if ($old) { $token = $old.Substring(13) } }
     if (-not $token) { $bytes = New-Object byte[] 32; $rng = [Security.Cryptography.RandomNumberGenerator]::Create(); $rng.GetBytes($bytes); $rng.Dispose(); $token = [BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant() }
-    $envText = @("VEKTOR_IMAGE=$($release.agentImage)", "OLLAMA_IMAGE=$($release.ollamaImage)", "VEKTOR_PORT=$($config.Port)", "BROKER_PORT=$($config.BrokerPort)", "BROKER_TOKEN=$token", "HOST_ENABLED=$(([string]$config.HostEnabled).ToLowerInvariant())", "VEKTOR_WORKSPACE=$($config.Workspace.Replace('\','/'))", "LOCAL_MODEL=$($config.Model)", "LOCAL_CONTEXT=$($config.Context)", "CLOUD_MODEL=$($release.cloudModel)", "STRONG_MODEL=$($release.strongModel)", 'MODEL_MODE=auto') -join "`n"
+    $envText = @("VEKTOR_IMAGE=$($release.agentImage)", "OLLAMA_IMAGE=$($release.ollamaImage)", "VEKTOR_PORT=$($config.Port)", "BROKER_PORT=$($config.BrokerPort)", "BROKER_TOKEN=$token", "HOST_ENABLED=$(([string]$config.HostEnabled).ToLowerInvariant())", "VEKTOR_WORKSPACE=$($config.Workspace.Replace('\','/'))", "LOCAL_MODEL=$($config.Model)", "LOCAL_CONTEXT=$($config.Context)", "CLOUD_MODEL=$($release.cloudModel)", "STRONG_MODEL=$($release.strongModel)", "VISION_MODEL=$($release.visionModel)", 'VISION_AUTO=true', 'VISION_FOLLOWUP_LIMIT=2', 'MODEL_MODE=auto') -join "`n"
     Write-PrivateFile $envPath $envText
     Write-PrivateFile $configPath ($config | ConvertTo-Json)
     $compose = Get-ComposeArguments $InstallDir $config

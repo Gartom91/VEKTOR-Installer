@@ -1,4 +1,29 @@
-# VEKTOR Windows 1.4.0
+# VEKTOR Windows 1.5.0
+
+## Hybrydowy model główny i Vision
+
+- Domyślny model główny `glm-5.3:cloud`, specjalista obrazu `glm-5.3-flash:cloud`; edytowalne role i potwierdzane możliwości modeli w ustawieniach.
+- Analiza obrazu dostosowana do zadania. Walidowany raport rozdziela OCR, obserwacje, lokalizacje, niepewności i alternatywy. Oryginały zachowane; model może dopytać o szczegół lub wycinek. Domyślnie dwie dodatkowe rundy, ustawienie 0–8.
+- Czytelne, rozwijane raporty w chronologii chatu, osobna odpowiedź końcowa, otwieranie i pobieranie źródeł. Cache powiązany z oryginałem, pytaniem i modelem.
+- Wspólny limit trzech żądań Ollama cloud. Tryb lokalny bez inferencji cloud i Swarmu, jeden załadowany model naraz. Usunięto fałszywe przełączanie na local przy błędach wewnętrznych i autoryzacji.
+- Streaming publicznej odpowiedzi z zachowaniem historii; licznik działa również przy częstych pakietach bez tekstu. Po odświeżeniu zadanie trwa dalej; zatrzymanie zwalnia strumień i natychmiast aktualizuje plan.
+
+## Niezawodność pracy i MCP
+
+- Naprawiono interpretację „dodasz sobie serwer MCP Context7”, „Ponów” i „Przystąp do realizacji planu”. Kontynuacja wymaga wcześniejszego zakresu zgody; pytania i wycofanie zgody nadal blokują zmiany także przy pełnym dostępie.
+- Powtórzone odczyty powodują wykorzystanie poprzedniego wyniku i przeplanowanie, nie blokadę całej odpowiedzi. Nieistotne błędy źródeł nie zastępują uzyskanych rezultatów komunikatem niepowodzenia.
+- MCP: precheck przed dodaniem, rzeczywisty handshake i wykonywanie narzędzi, zgodność z SDK 2.x oraz trwałe metadane. Context7 przetestowano od konfiguracji po zapytania o dokumentację Python. Instalator nie dodaje go bez polecenia użytkownika.
+- Narzędzia pamięci i wiedzy związane z bieżącym projektem. Niejednoznaczne „znajdź sobie plik z pamięcią” wywołuje doprecyzowanie zamiast poszukiwania zrzutów RAM.
+- Poprawki układu: miejsce i suwak historii rozmów także w niskim oknie, zawijanie długich nazw, wyrównane kontrolki ustawień. Pozostają wcześniejsze funkcje Office, artefaktów, powiadomień i graficznych diagramów.
+
+## Weryfikacja i instalacja
+
+- Backend Windows: **216 PASS / 1 SKIP** (render LibreOffice sprawdzany w Dockerze). Backend Linux w wydawanym obrazie: **200 PASS / 17 SKIP** (integracje Windows sprawdzane na Windowsie). UI: **48 PASS**, produkcyjny build poprawny.
+- Rzeczywiste próby: dwie ścieżki cloud na syntetycznej tabeli, doprecyzowanie wycinka, cache po otwarciu nowej sesji, lokalny Vision bez cloud, Context7, upload i rozłączenie SSE, odświeżenie podczas streamingu, zatrzymanie oraz nowy chat.
+- Obraz `1.5.0` i `latest` sprawdzone po publikacji; instalator przypina dokładny SHA256, zachowuje lokalne dane i logowania. Domyślny Flash migruje jednorazowo do mocniejszego modelu; niestandardowe wybory pozostają.
+- Installer CI sprawdza PowerShell 5.1, profile sprzętowe, przypięcia obrazów, nowe role modeli, zgodność wersji i zawartość EXE oraz faktyczny start spakowanego modułu Windows, blokadę żądań bez tokenu i endpoint metryk. Te same testy przeszły lokalnie. Instalator nadal jest online, Windows x64, bez komercyjnego podpisu Authenticode. Nie deklarujemy testów na wszystkich fizycznych komputerach ani gwarancji bezbłędności modeli.
+
+## Wcześniejsze wydania
 
 ## VEKTOR Office 1.4.0
 - Tworzenie i edycja Word DOCX, Excel XLSX, PowerPoint PPTX i PDF przez pakiet `office-suite`.

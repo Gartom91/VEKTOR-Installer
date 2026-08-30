@@ -24,9 +24,7 @@ jobs:
         run: ./build.ps1
       - name: Check embedded payload
         shell: pwsh
-        run: |
-          $p = Start-Process -FilePath ./dist/VEKTOR-Setup-x64.exe -ArgumentList '--extract', "$env:RUNNER_TEMP/vektor-payload" -Wait -PassThru -WindowStyle Hidden
-          if ($p.ExitCode -ne 0 -or !(Test-Path "$env:RUNNER_TEMP/vektor-payload/VEKTOR-Host.exe")) { throw 'Missing payload' }
+        run: ./test-payload.ps1 -Installer ./dist/VEKTOR-Setup-x64.exe -OutputDir "$env:RUNNER_TEMP/vektor-payload"
       - uses: actions/upload-artifact@v4
         with:
           name: VEKTOR-Windows-x64

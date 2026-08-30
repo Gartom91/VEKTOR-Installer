@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $errors = @()
-foreach ($file in Get-ChildItem payload -Filter *.ps1) {
+foreach ($file in (@(Get-ChildItem payload -Filter *.ps1) + @(Get-ChildItem . -Filter *.ps1))) {
     $parseErrors = $null
     [void][Management.Automation.Language.Parser]::ParseFile($file.FullName, [ref]$null, [ref]$parseErrors)
     if ($parseErrors) { $errors += $parseErrors }
@@ -24,9 +24,18 @@ try { if ((Get-FreePort 29700) -eq 29700) { throw 'Port detection failed' } } fi
 $release = Get-Content payload/release.json -Raw | ConvertFrom-Json
 if ($release.agentImage -notmatch '@sha256:[a-f0-9]{64}$' -or $release.ollamaImage -notmatch '@sha256:[a-f0-9]{64}$') { throw 'Images must be pinned by digest' }
 if ((Get-Content payload/compose.yaml -Raw) -notmatch 'OLLAMA_MAX_LOADED_MODELS: "1"') { throw 'Local model limit missing' }
+if ($release.cloudModel -ne 'glm-5.3:cloud' -or $release.visionModel -ne 'glm-5.3-flash:cloud') { throw 'Hybrid model defaults missing' }
+$composeText = Get-Content payload/compose.yaml -Raw
+foreach ($binding in @('OLLAMA_MODEL: ${CLOUD_MODEL:-glm-5.3:cloud}', 'OLLAMA_VISION_MODEL: ${VISION_MODEL:-glm-5.3-flash:cloud}', 'VISION_AUTO: ${VISION_AUTO:-true}', 'VISION_FOLLOWUP_LIMIT: ${VISION_FOLLOWUP_LIMIT:-2}', 'OLLAMA_NUM_PARALLEL: "1"')) {
+    if (-not $composeText.Contains($binding)) { throw "Missing Compose binding: $binding" }
+}
+$installScript = Get-Content payload/Install-VEKTOR.ps1 -Raw
+if (-not $installScript.Contains('VISION_MODEL=$($release.visionModel)')) { throw 'Vision model not written to install environment' }
+$projectXml = [xml](Get-Content src/VEKTOR.Setup.csproj -Raw)
+if ($projectXml.Project.PropertyGroup.Version -ne $release.version) { throw 'Installer and payload versions differ' }
 $result = Invoke-Checked (Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe') @('-NoProfile', '-Command', 'exit 7') -AllowFailure
 if ($result.ExitCode -ne 7) { throw 'Child exit code lost' }
-Write-Host 'PASS: parser, 5 hardware profiles, low RAM, occupied port, pinned images, local model limit, process exit code.'
+Write-Host 'PASS: parser, 5 hardware profiles, low RAM, occupied port, pinned images, local limits, hybrid defaults, version consistency, process exit code.'
 $privateTest = Join-Path ([IO.Path]::GetTempPath()) ('vektor-acl-' + [guid]::NewGuid().ToString('N') + '.txt')
 try {
     Write-PrivateFile $privateTest 'test-not-a-secret'

@@ -5,8 +5,11 @@ services:
     ports: ["127.0.0.1:${VEKTOR_PORT:-8765}:8765"]
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_MODEL: ${CLOUD_MODEL:-glm-5.3-flash:cloud}
+      OLLAMA_MODEL: ${CLOUD_MODEL:-glm-5.3:cloud}
       OLLAMA_STRONG_MODEL: ${STRONG_MODEL:-glm-5.3:cloud}
+      OLLAMA_VISION_MODEL: ${VISION_MODEL:-glm-5.3-flash:cloud}
+      VISION_AUTO: ${VISION_AUTO:-true}
+      VISION_FOLLOWUP_LIMIT: ${VISION_FOLLOWUP_LIMIT:-2}
       OLLAMA_LOCAL_MODEL: ${LOCAL_MODEL:-qwen3:4b}
       OLLAMA_LOCAL_VISION_MODEL: gemma3:4b
       OLLAMA_LOCAL_CONTEXT: ${LOCAL_CONTEXT:-4096}

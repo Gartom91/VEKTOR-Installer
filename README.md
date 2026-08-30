@@ -24,7 +24,9 @@ VEKTOR i Ollama są dwoma kontenerami jednego projektu Compose `vektor-desktop`,
 - NVIDIA jest najpierw sprawdzana w kontenerze; brak działającego GPU powoduje jawny fallback do CPU.
 - Dobór lokalnego modelu: 8 GB RAM bez GPU → qwen3:1.7b; 16 GB+ RAM / GPU 4 GB → qwen3:4b; GPU 6 GB+ → qwen3:8b. Kontekst 4096–16384 zależnie od VRAM.
 - Lokalny Vision: gemma3:4b. Tylko jeden model lokalny załadowany jednocześnie, lokalny swarm wyłączony.
-- Cloud: glm-5.3-flash:cloud i mocniejszy glm-5.3:cloud; wymagają własnego logowania i dostępności w Ollamie.
+- Cloud: domyślny model główny **glm-5.3:cloud**, specjalista Vision **glm-5.3-flash:cloud**. Wymagają własnego logowania i dostępności w Ollamie. Obie role można zmienić w ustawieniach aplikacji.
+- Obraz jest analizowany pod kątem pytania użytkownika; model główny dostaje walidowany raport OCR/obserwacji/niepewności i może dopytać o wycinek oryginału. Raporty, oryginały i linki pobierania pozostają w chacie. Domyślnie dwie dodatkowe rundy, limit konfigurowalny 0–8.
+- VEKTOR ogranicza łącznie wywołania modeli Ollama cloud do trzech naraz. W trybie lokalnym pomija cloud i Swarm; modele lokalne są uruchamiane pojedynczo. Limity konta zużywane przez inne aplikacje pozostają niezależne.
 - Sterowniki GPU, BIOS, proxy firmowe i polityki zabezpieczeń pozostają zależne od komputera. Instalator nie wyłącza ochrony Windows ani zapory.
 
 ## Dane, aktualizacja, usuwanie
@@ -50,6 +52,7 @@ Wymagane .NET 10 SDK i Python 3.12 wyłącznie na komputerze budującym.
 ```powershell
 ./test-installer.ps1
 ./build.ps1 -Python python
+./test-payload.ps1
 ```
 
 Tag `v*` uruchamia GitHub Actions, buduje instalator, wykonuje testy, zapisuje sumę SHA256 i publikuje artefakty w GitHub Releases. Aktualizacja wersji aplikacji wymaga wcześniejszej publikacji obrazu i zmiany przypiętego digestu w `payload/release.json`.
