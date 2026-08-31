@@ -1,4 +1,26 @@
-# VEKTOR Windows 1.6.4 — kontekst z historii rozmów projektu
+# VEKTOR Windows 1.7.0 — odzyskiwanie, kontekst i edycja wyników
+
+- Trwałe punkty kontynuacji, zaakceptowane wywołania i wyniki narzędzi. Restart zachowuje zadanie i budżet; potwierdzone operacje nie są powtarzane. Niepewne skutki zapisu wymagają jawnej decyzji: pominąć ponowienie, świadomie ponowić lub zatrzymać. Brak obietnicy atomowości zewnętrznych usług.
+- **Zmiany zadania**: podgląd różnic, wybór plików i przywracanie z ochroną przed nadpisaniem późniejszych zmian. Kopie są ograniczone do katalogu projektu i limitów dysku; pliki pominięte są widoczne. Operacje poza katalogiem, wiadomości i instalacje nie są cofane.
+- **Kosz** rozmów i projektów z przywracaniem, domyślną retencją 30 dni i osobnym potwierdzeniem trwałego usunięcia. Usunięte rozmowy nie zasilają kontekstu. Pliki współdzielone są chronione; przywrócone automatyzacje pozostają wstrzymane.
+- **Skąd to wiesz?** przy odpowiedzi: rzeczywiste źródła danej rundy, wyniki narzędzi, przypinanie/pomijanie źródeł i poprawianie pamięci. Historyczne źródła pozostają niezmienione; nie pokazujemy prywatnego rozumowania modelu.
+- **Edytuj** przy artefakcie: panel obok czatu, tekst/kod, Markdown/Mermaid, akapity i tabele DOCX, komórki i zakresy XLSX, tekst PPTX, strony i formularze PDF. Propozycja AI ma ograniczony zakres i nie nadpisuje oryginału bez potwierdzenia, także przy pełnym dostępie. Historia, podgląd, pobranie i kontrola konfliktów.
+- **Procedury**: szkic z zakończonej rozmowy albo ręcznie, parametry, kroki i kryteria, przegląd przed publikacją, niezmienne wersje oraz uruchamianie i harmonogram związany z konkretną wersją. Dawna zgoda nie autoryzuje nowego działania.
+- **Laboratorium jakości** w diagnostyce: kontrole komponentów i syntetyczne testy do trzech modeli, wykonywane kolejno. Czas, tokeny, dowody, historia i pobranie raportu, zatrzymanie i limity. Brak Vision/dostępu nie jest liczony jako PASS; domyślny model nie jest samowolnie zmieniany.
+- Poprawki UI: chronologia i liczniki po odświeżeniu, działające względne odnośniki do znanych artefaktów, czytelny edytor w węższym oknie, zawijanie długich skrótów, jednolite przyciski, różnice plików bez końcowego Entera. Aktywne zadanie nie dostaje zmyślonej odpowiedzi końcowej z surowego wyniku narzędzia.
+
+## Weryfikacja 1.7.0
+
+- Backend Windows: **510 PASS / 2 SKIP**; finalny obraz Linux: **494 PASS / 18 SKIP**; UI: **127 PASS**, poprawny build TypeScript/Vite. Pominięte testy są zależne od platformy, nie zaliczamy ich jako sukcesy.
+- Pięć rzeczywistych testów zatrzymania/restartu procesu w finalnym obrazie: brak powtórzenia potwierdzonego zapisu, łagodny restart, niepewny zapis z pominięciem, jawne ponowienie oraz przerwanie zatwierdzanej operacji.
+- Dwukrotna migracja kopii ośmiu baz projektów do 0003: identyczne dane wszystkich wcześniejszych tabel i poprawna integralność. Testy nie modyfikowały oryginałów.
+- Rzeczywiste modele: GLM 5.3 **4/4** obsługiwanych scenariuszy; Flash **5/5**, łącznie z prostym Vision. Wszystkie pięć kontroli aplikacji zaliczone. To konkretne testy, nie gwarancja poprawności dowolnego zadania.
+- Testy na żywym UI: wykonanie procedury i zgoda, podgląd/zapis/cofnięcie artefaktu, kosz i przywrócenie, rzeczywisty inspektor kontekstu, laboratorium oraz ograniczona propozycja AI bez modyfikacji oryginału przed zgodą.
+- Instalator Windows x64 pozostaje online; przypina obraz VEKTORA i Ollamy po SHA256, obsługuje instalację brakujących zależności, skrót i start modułu Windows. Bez kopiowania tokenów autora. SmartScreen nie jest wyłączany. Nie deklarujemy testu instalacji na każdym komputerze.
+
+Instrukcja nowych funkcji: [WORKBENCH.md](https://github.com/Gartom91/VEKTOR-Installer/blob/main/docs/WORKBENCH.md).
+
+## VEKTOR Windows 1.6.4 — kontekst z historii rozmów projektu
 
 - Agent wyszukuje i odczytuje wcześniejsze rozmowy z bieżącego projektu/kategorii. „Bez projektu” ma osobną historię; narzędzia nie pozwalają wybierać obcej bazy ani czytać chatów innego projektu.
 - Trafne, datowane fragmenty uzupełniają kontekst automatycznie. `search_project_chats` wyszukuje temat lub przegląda ostatnie rozmowy, a `read_project_chat` doczytuje je chronologicznie, również długie pojedyncze wiadomości, z zachowaniem limitu kontekstu.
