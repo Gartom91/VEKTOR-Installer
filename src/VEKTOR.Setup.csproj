@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>VEKTOR-Setup</AssemblyName>
-    <Version>1.6.3</Version>
+    <Version>1.6.4</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>../payload/vektor-app-v1.ico</ApplicationIcon>
     <PublishSingleFile>true</PublishSingleFile>

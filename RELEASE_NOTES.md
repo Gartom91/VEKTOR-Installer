@@ -1,4 +1,15 @@
-# VEKTOR Windows 1.6.3 — edycja obrazów przez podłączony OpenAI
+# VEKTOR Windows 1.6.4 — kontekst z historii rozmów projektu
+
+- Agent wyszukuje i odczytuje wcześniejsze rozmowy z bieżącego projektu/kategorii. „Bez projektu” ma osobną historię; narzędzia nie pozwalają wybierać obcej bazy ani czytać chatów innego projektu.
+- Trafne, datowane fragmenty uzupełniają kontekst automatycznie. `search_project_chats` wyszukuje temat lub przegląda ostatnie rozmowy, a `read_project_chat` doczytuje je chronologicznie, również długie pojedyncze wiadomości, z zachowaniem limitu kontekstu.
+- Wyszukiwanie działa lokalnie w SQLite, bez dodatkowego modelu i wywołań cloud. Indeks uwzględnia dodanie, edycję i usunięcie wiadomości; obsługuje polskie znaki, tytuły i stare wiadomości poza ostatnimi 30 wpisami.
+- Historyczne ustalenia mają linki do źródeł. Odnośnik otwiera właściwy projekt i chat w osobnej karcie oraz wyróżnia cytowaną wiadomość, zachowując bieżące zadanie i szkic prompta.
+- Historia jest cytowanymi danymi, nie nową instrukcją lub zgodą. Dawne polecenia nie odblokowują zmian przy nowym pytaniu, także z pełnym dostępem. Rozpoznawalne sekrety są maskowane, a prywatne rozumowanie, podglądy streamingu i bajty załączników nie są importowane.
+- Polecenie „Nie korzystaj z poprzednich rozmów w tym zadaniu” wyłącza korzystanie z historii dla bieżącego zadania. Błąd indeksu nie jest przedstawiany jako pusta historia i nie blokuje niepowiązanej pracy.
+- Zbyt duży limit strony podany przez model jest bezpiecznie ograniczany przez serwer zamiast powodować serię ponowień. Nadal dostępny jest kursor do dalszego odczytu.
+- Weryfikacja: 36 regresji historii, pełny backend Windows 464 PASS / 1 SKIP, docelowy obraz Linux 447 PASS / 18 SKIP, interfejs 117 PASS i produkcyjny build. Pięć prób HTTP z rzeczywistym `glm-5.3:cloud` na izolowanej instancji Docker potwierdziło trafny kontekst, oba narzędzia, źródła, rozdzielenie dwóch projektów i „Bez projektu” oraz wyłączenie historii, bez błędów narzędzi i bez fallbacku.
+
+## VEKTOR Windows 1.6.3 — edycja obrazów przez podłączony OpenAI
 
 - Polecenia złożone, np. „Weź ten obraz i na jego podstawie wygeneruj mi postać w bardziej bojowej pozie”, nie są już traktowane jako sama dyskusja. Poprawiona klasyfikacja działa także przy ponowieniu wcześniejszej rozmowy; nie cofa wyraźnego wstrzymania działań.
 - Generator jest narzędziem niezależnym od listy umiejętności. Sama analiza Vision lub gotowy prompt nie wystarczają do zakończenia zamówionego generowania. Po błędnej odmowie modelu VEKTOR podejmuje ograniczoną próbę naprawczą przez normalne narzędzie i mechanizm zgód.
