@@ -1,4 +1,14 @@
-# VEKTOR Windows 1.6.2 — kompaktowy wybór modelu w chacie
+# VEKTOR Windows 1.6.3 — edycja obrazów przez podłączony OpenAI
+
+- Polecenia złożone, np. „Weź ten obraz i na jego podstawie wygeneruj mi postać w bardziej bojowej pozie”, nie są już traktowane jako sama dyskusja. Poprawiona klasyfikacja działa także przy ponowieniu wcześniejszej rozmowy; nie cofa wyraźnego wstrzymania działań.
+- Generator jest narzędziem niezależnym od listy umiejętności. Sama analiza Vision lub gotowy prompt nie wystarczają do zakończenia zamówionego generowania. Po błędnej odmowie modelu VEKTOR podejmuje ograniczoną próbę naprawczą przez normalne narzędzie i mechanizm zgód.
+- Edycja korzysta z oryginalnych obrazów załączonych do rozmowy lub wskazanych w workspace projektu. Codex App Server otrzymuje rzeczywiste obrazy jako wejścia `localImage`, nie tylko opis Vision. Kontrolowane są przynależność źródeł, integralność, format i rozmiar.
+- Oryginały i wcześniejsze wyniki nie są nadpisywane. Brak pliku, błąd generatora lub brak obsługi edycji z referencją oznacza jawny problem, nie wygenerowanie zamiennika z samego tekstu ani fałszywy sukces.
+- Zachowano tryb lokalny, uprawnienia i wycofywanie zgód. Zatwierdzone generowanie nie jest powtarzane podczas kontynuacji. Tymczasowe kopie wejść są sprzątane także po błędzie, timeoutcie i anulowaniu.
+- Bez zmiany logowania: używane jest dotychczas podłączone konto Codex / ChatGPT projektu. Nie są kopiowane tokeny z aplikacji Codex ani włączane rozliczenia API.
+- Testy: 74 regresje obrazów PASS, pełny backend Windows 428 PASS / 1 SKIP, docelowy obraz Linux 411 PASS / 18 SKIP, interfejs 103 PASS i produkcyjny build. Testy instalatora PowerShell 5.1 PASS. Regresje obejmują fałszywą odmowę modelu, rzeczywiste bajty referencji, brak załącznika, błędy dostawcy, granice projektów, zgody, timeout i anulowanie.
+
+## VEKTOR Windows 1.6.2 — kompaktowy wybór modelu w chacie
 
 - Selektor modelu nie rozciąga się już na wolną szerokość pola prompta. Pole modelu ma 214 px, cały zestaw z trybem i odświeżaniem — maksymalnie 440 px. Na węższym ekranie kontrolki zawijają się; długie nazwy są skracane wizualnie, a pełna nazwa pozostaje w podpowiedzi i na liście.
 - Usunięto stały dopisek o przekazywaniu obrazów przez Flash/Vision i pusty wiersz pod selektorem. Automatyczna analiza obrazów i wybór specjalisty pozostają bez zmian.
