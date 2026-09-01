@@ -1,7 +1,8 @@
 {
-  "version": "1.7.0",
-  "updateProtocol": 1,
-  "agentImage": "gartom91/local-ai-agent:1.7.0@sha256:c26b0c45d29b08218fde632b7d3abec74b60a5b458b1c09d6ebd0c6a24db82f7",
+  "version": "1.8.0",
+  "updateProtocol": 2,
+  "agentImage": "gartom91/local-ai-agent:1.8.0@sha256:3e26909f565550c5f074813bfa636bc6ef8d955f90f6844dd9cc01dba46986f7",
+  "diffusionImage": "gartom91/vektor-diffusion:1.8.0@sha256:b3dc895de33e16e2ebca6c6a844fb0f84b3f2f9eb9c0881cb654be5879675ad0",
   "ollamaImage": "ollama/ollama:0.33.2@sha256:020e4134285e2ef4d8fd801234176de3b4faadc992a3eb06c8e66a2f9d4c4ba2",
   "cloudModel": "glm-5.3:cloud",
   "visionModel": "glm-5.3-flash:cloud",

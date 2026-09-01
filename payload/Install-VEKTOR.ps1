@@ -101,12 +101,12 @@ try {
     $token = ''
     if (Test-Path -LiteralPath $envPath) { $old = Get-Content -LiteralPath $envPath | Where-Object { $_.StartsWith('BROKER_TOKEN=') }; if ($old) { $token = $old.Substring(13) } }
     if (-not $token) { $bytes = New-Object byte[] 32; $rng = [Security.Cryptography.RandomNumberGenerator]::Create(); $rng.GetBytes($bytes); $rng.Dispose(); $token = [BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant() }
-    $envText = @("VEKTOR_IMAGE=$($release.agentImage)", "OLLAMA_IMAGE=$($release.ollamaImage)", "VEKTOR_PORT=$($config.Port)", "BROKER_PORT=$($config.BrokerPort)", "BROKER_TOKEN=$token", "HOST_ENABLED=$(([string]$config.HostEnabled).ToLowerInvariant())", "VEKTOR_WORKSPACE=$($config.Workspace.Replace('\','/'))", "LOCAL_MODEL=$($config.Model)", "LOCAL_CONTEXT=$($config.Context)", "CLOUD_MODEL=$($release.cloudModel)", "STRONG_MODEL=$($release.strongModel)", "VISION_MODEL=$($release.visionModel)", 'VISION_AUTO=true', 'VISION_FOLLOWUP_LIMIT=2', 'MODEL_MODE=auto') -join "`n"
+    $envText = @("VEKTOR_IMAGE=$($release.agentImage)", "OLLAMA_IMAGE=$($release.ollamaImage)", "DIFFUSION_IMAGE=$($release.diffusionImage)", "VEKTOR_PORT=$($config.Port)", "BROKER_PORT=$($config.BrokerPort)", "BROKER_TOKEN=$token", "HOST_ENABLED=$(([string]$config.HostEnabled).ToLowerInvariant())", "VEKTOR_WORKSPACE=$($config.Workspace.Replace('\','/'))", "LOCAL_MODEL=$($config.Model)", "LOCAL_CONTEXT=$($config.Context)", "CLOUD_MODEL=$($release.cloudModel)", "STRONG_MODEL=$($release.strongModel)", "VISION_MODEL=$($release.visionModel)", 'VISION_AUTO=true', 'VISION_FOLLOWUP_LIMIT=2', 'MODEL_MODE=auto') -join "`n"
     Write-PrivateFile $envPath $envText
     Write-PrivateFile $configPath ($config | ConvertTo-Json)
     # A previous automatic pin must not silently override the newer installer.
     # Preserve the old pin, and never overwrite a custom Compose override.
-    Set-InstallerUpdatePin $InstallDir $release.agentImage
+    Set-InstallerUpdatePin $InstallDir $release.agentImage $release.diffusionImage
     $compose = Get-ComposeArguments $InstallDir $config
     $running = Invoke-Checked $docker ($compose + @('ps', '-q', '--status', 'running', 'agent')) -Timeout 30 -AllowFailure
     if ($running.ExitCode -eq 0 -and $running.Output.Trim()) {
@@ -114,7 +114,7 @@ try {
         $backupCode = 'import sqlite3,datetime,pathlib; p=pathlib.Path("/app/data/backups"); p.mkdir(exist_ok=True); sqlite3.connect("/app/data/agent.db").backup(sqlite3.connect(str(p/("pre-update-"+datetime.datetime.now().strftime("%Y%m%d-%H%M%S")+".db"))))'
         $null = Invoke-Checked $docker ($compose + @('exec', '-T', 'agent', 'python', '-c', $backupCode)) -Timeout 120
     }
-    Write-Host 'Pobieranie przypietych obrazow VEKTORA i Ollamy...'
+    Write-Host 'Pobieranie przypietych obrazow VEKTORA, Ollamy i lokalnego generatora obrazow...'
     $null = Invoke-Checked $docker ($compose + @('pull')) -Timeout 3600
     Start-Broker $InstallDir $config
     $null = Invoke-Checked $docker ($compose + @('up', '-d', '--wait', '--wait-timeout', '240')) -Timeout 300

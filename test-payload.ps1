@@ -11,7 +11,7 @@ $extract = Start-Process -FilePath $Installer -ArgumentList @('--extract', ('"' 
 if ($extract.ExitCode -ne 0) { throw 'Installer extraction failed.' }
 $expected = Get-Content (Join-Path $PSScriptRoot 'payload\release.json') -Raw | ConvertFrom-Json
 $packaged = Get-Content (Join-Path $OutputDir 'release.json') -Raw | ConvertFrom-Json
-foreach ($key in 'version','agentImage','ollamaImage','cloudModel','visionModel','updateProtocol') {
+foreach ($key in 'version','agentImage','diffusionImage','ollamaImage','cloudModel','visionModel','updateProtocol') {
     if ($packaged.$key -ne $expected.$key) { throw "Wrong embedded release field: $key" }
 }
 $actualVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($Installer).FileVersion
@@ -48,7 +48,7 @@ try {
         Start-Sleep -Milliseconds 200
     } while ((Get-Date) -lt $deadline)
     if ($health.status -ne 'ok' -or $health.configured_root_count -ne 1) { throw 'Packaged host healthcheck failed.' }
-    if ($health.update_protocol -ne 1 -or $health.host_tools_enabled) { throw 'Updater protocol or host-tools opt-in is missing.' }
+    if ($health.update_protocol -ne 2 -or $health.host_tools_enabled) { throw 'Updater protocol or host-tools opt-in is missing.' }
     $unauthorizedStatus = 0
     try { $null = Invoke-WebRequest "http://127.0.0.1:$testPort/v1/system/metrics" -UseBasicParsing -TimeoutSec 3 }
     catch { if ($_.Exception.Response) { $unauthorizedStatus = [int]$_.Exception.Response.StatusCode } else { throw } }

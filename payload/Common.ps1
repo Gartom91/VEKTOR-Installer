@@ -49,30 +49,45 @@ function Get-FreePort([int]$Preferred) {
 
 function Get-ComposeArguments([string]$InstallDir, $Config) {
     $result = @('compose', '--project-name', 'vektor-desktop', '--project-directory', $InstallDir, '--env-file', (Join-Path $InstallDir '.env'), '-f', (Join-Path $InstallDir 'compose.yaml'))
-    if ($Config.GPU) { $result += @('-f', (Join-Path $InstallDir 'compose.gpu.yaml')) }
+    if ($Config.GPU) { $result += @('-f', (Join-Path $InstallDir 'compose.gpu.yaml'), '--profile', 'images') }
     if (Get-ManagedUpdatePin $InstallDir) { $result += @('-f', (Join-Path $InstallDir 'compose.update.yaml')) }
     return $result
 }
 
-function Get-ManagedUpdatePin([string]$InstallDir) {
+function Read-ManagedUpdatePins([string]$InstallDir) {
     $path = Join-Path $InstallDir 'compose.update.yaml'
     if (-not (Test-Path -LiteralPath $path)) { return $null }
     if ((Get-Item -LiteralPath $path).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw 'Plik aktualizacji jest dowiazaniem. Wymagana diagnostyka reczna.' }
     $content = (Get-Content -LiteralPath $path -Raw).Replace("`r`n", "`n")
     $header = "# Managed by VEKTOR updater. Data and other services are unchanged.`nservices:`n  agent:`n    image: "
     if (-not $content.StartsWith($header)) { throw 'Niestandardowy compose.update.yaml: nie nadpisze konfiguracji.' }
-    $image = $content.Substring($header.Length).Trim()
-    if ($image -notmatch '^(gartom91/local-ai-agent:(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)@sha256:[a-f0-9]{64}|sha256:[a-f0-9]{64})$') { throw 'Nieprawidlowe przypiecie obrazu aktualizacji.' }
-    return $image
+    $lines = $content.Substring($header.Length).TrimEnd("`n").Split("`n")
+    if ($lines.Count -notin @(1,3)) { throw 'Niestandardowy compose.update.yaml: nie nadpisze konfiguracji.' }
+    $agent = $lines[0]
+    if ($agent -notmatch '^(gartom91/local-ai-agent:(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)@sha256:[a-f0-9]{64}|sha256:[a-f0-9]{64})$') { throw 'Nieprawidlowe przypiecie obrazu aktualizacji.' }
+    $diffusion = $null
+    if ($lines.Count -eq 3) {
+        if ($lines[1] -cne '  stable-diffusion:' -or -not $lines[2].StartsWith('    image: ')) { throw 'Niestandardowy compose.update.yaml: nie nadpisze konfiguracji.' }
+        $diffusion = $lines[2].Substring(11)
+        if ($diffusion -notmatch '^(gartom91/vektor-diffusion:(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)@sha256:[a-f0-9]{64}|sha256:[a-f0-9]{64})$') { throw 'Nieprawidlowe przypiecie generatora obrazow.' }
+    }
+    return [pscustomobject]@{ Agent = $agent; Diffusion = $diffusion }
 }
 
-function Set-InstallerUpdatePin([string]$InstallDir, [string]$Image) {
-    if (-not (Get-ManagedUpdatePin $InstallDir)) { return }
+function Get-ManagedUpdatePin([string]$InstallDir) {
+    $pins = Read-ManagedUpdatePins $InstallDir
+    if ($pins) { return $pins.Agent }
+    return $null
+}
+
+function Set-InstallerUpdatePin([string]$InstallDir, [string]$Image, [string]$DiffusionImage) {
+    if (-not (Read-ManagedUpdatePins $InstallDir)) { return }
     if ($Image -notmatch '^gartom91/local-ai-agent:[0-9]+\.[0-9]+\.[0-9]+@sha256:[a-f0-9]{64}$') { throw 'Instalator wymaga oficjalnego obrazu z SHA256.' }
+    if ($DiffusionImage -notmatch '^gartom91/vektor-diffusion:[0-9]+\.[0-9]+\.[0-9]+@sha256:[a-f0-9]{64}$') { throw 'Instalator wymaga oficjalnego generatora obrazow z SHA256.' }
     $path = Join-Path $InstallDir 'compose.update.yaml'
     $backup = Join-Path $InstallDir ('compose.update.before-installer-' + [guid]::NewGuid().ToString('N') + '.yaml')
     Copy-Item -LiteralPath $path -Destination $backup
-    Write-PrivateFile $path ("# Managed by VEKTOR updater. Data and other services are unchanged.`nservices:`n  agent:`n    image: " + $Image + "`n")
+    Write-PrivateFile $path ("# Managed by VEKTOR updater. Data and other services are unchanged.`nservices:`n  agent:`n    image: " + $Image + "`n  stable-diffusion:`n    image: " + $DiffusionImage + "`n")
 }
 
 function Write-PrivateFile([string]$Path, [string]$Content) {

@@ -21,13 +21,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
-PROTOCOL = 1
+PROTOCOL = 2
 REPOSITORY = "gartom91/local-ai-agent"
+DIFFUSION_REPOSITORY = "gartom91/vektor-diffusion"
 RELEASE_REPOSITORY = "Gartom91/VEKTOR-Installer"
 RELEASE_API = f"https://api.github.com/repos/{RELEASE_REPOSITORY}/releases/latest"
 RELEASES_URL = f"https://github.com/{RELEASE_REPOSITORY}/releases/latest"
 VERSION_RE = r"(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)"
 IMAGE_RE = re.compile(rf"^{re.escape(REPOSITORY)}:({VERSION_RE})@sha256:[a-f0-9]{{64}}$")
+DIFFUSION_IMAGE_RE = re.compile(rf"^{re.escape(DIFFUSION_REPOSITORY)}:({VERSION_RE})@sha256:[a-f0-9]{{64}}$")
+MANAGED_OVERRIDE_HEADER = "# Managed by VEKTOR updater. Data and other services are unchanged.\nservices:\n"
 DEFAULT_SETTINGS = {"auto_check": True, "auto_install": True, "interval_hours": 6, "idle_minutes": 5}
 CRITICAL_PHASES = {"backing_up", "installing", "verifying", "rolling_back"}
 
@@ -64,8 +67,43 @@ def validate_release(value, tag):
     protocol = value.get("updateProtocol")
     if type(protocol) is not int or protocol < 1:
         raise UpdateError("Wydanie nie zawiera informacji o obsłudze automatycznych aktualizacji.")
-    return {"version": version, "image": image, "protocol": protocol,
+    diffusion_image = value.get("diffusionImage")
+    if protocol >= 2:
+        diffusion_match = DIFFUSION_IMAGE_RE.fullmatch(diffusion_image) if isinstance(diffusion_image, str) else None
+        if not diffusion_match or diffusion_match.group(1) != version:
+            raise UpdateError("Generator obrazów musi pochodzić z oficjalnego repozytorium i być przypięty po SHA256.")
+    else:
+        diffusion_image = None
+    return {"version": version, "image": image, "diffusion_image": diffusion_image, "protocol": protocol,
             "url": f"https://github.com/{RELEASE_REPOSITORY}/releases/tag/{tag}"}
+
+
+def parse_managed_override(content):
+    match = re.fullmatch(
+        re.escape(MANAGED_OVERRIDE_HEADER)
+        + r"  agent:\n    image: (?P<agent>[^\r\n]+)\n"
+        + r"(?:  stable-diffusion:\n    image: (?P<diffusion>[^\r\n]+)\n)?",
+        content.replace("\r\n", "\n"),
+    )
+    if not match:
+        raise UpdateError("Plik przypięcia wersji zmieniono ręcznie. Nie nadpiszę niestandardowej konfiguracji.")
+    agent, diffusion = match.group("agent"), match.group("diffusion")
+    if not IMAGE_RE.fullmatch(agent) and not re.fullmatch(r"sha256:[a-f0-9]{64}", agent):
+        raise UpdateError("Plik przypięcia wersji zawiera nieprawidłowy obraz VEKTORA.")
+    if diffusion and not DIFFUSION_IMAGE_RE.fullmatch(diffusion) and not re.fullmatch(r"sha256:[a-f0-9]{64}", diffusion):
+        raise UpdateError("Plik przypięcia wersji zawiera nieprawidłowy obraz generatora.")
+    return {"agent": agent, "diffusion": diffusion}
+
+
+def managed_override(agent, diffusion=None):
+    if not IMAGE_RE.fullmatch(agent) and not re.fullmatch(r"sha256:[a-f0-9]{64}", agent):
+        raise UpdateError("Nieprawidłowy obraz VEKTORA do przypięcia.")
+    if diffusion and not DIFFUSION_IMAGE_RE.fullmatch(diffusion) and not re.fullmatch(r"sha256:[a-f0-9]{64}", diffusion):
+        raise UpdateError("Nieprawidłowy obraz generatora do przypięcia.")
+    value = MANAGED_OVERRIDE_HEADER + "  agent:\n    image: " + agent + "\n"
+    if diffusion:
+        value += "  stable-diffusion:\n    image: " + diffusion + "\n"
+    return value
 
 
 class ReleaseRedirects(urllib.request.HTTPRedirectHandler):
@@ -190,13 +228,16 @@ class DockerStack:
         self.override = safe_path(self.root, "compose.update.yaml")
         config_path = safe_path(self.root, "installation.json")
         self.files = []
+        self.gpu_enabled = False
         self.prefix = ["compose", "--project-directory", str(self.root)]
         if config_path.exists():
             config = json.loads(config_path.read_text(encoding="utf-8-sig"))
             self.prefix += ["--project-name", "vektor-desktop", "--env-file", str(self.root / ".env")]
             self.files = [self.root / "compose.yaml"]
             if config.get("GPU"):
+                self.gpu_enabled = True
                 self.files.append(self.root / "compose.gpu.yaml")
+                self.prefix += ["--profile", "images"]
         else:
             self.files = [self.root / "docker-compose.yml"]
         for file in self.files:
@@ -231,10 +272,7 @@ class DockerStack:
         files = list(self.files)
         if self.override.exists():
             safe_path(self.root, self.override.name)
-            content = self.override.read_text(encoding="ascii")
-            image = content.removeprefix("# Managed by VEKTOR updater. Data and other services are unchanged.\nservices:\n  agent:\n    image: ").strip()
-            if not IMAGE_RE.fullmatch(image) and not re.fullmatch(r"sha256:[a-f0-9]{64}", image):
-                raise UpdateError("Plik przypięcia wersji zmieniono ręcznie. Nie nadpiszę niestandardowej konfiguracji.")
+            parse_managed_override(self.override.read_text(encoding="ascii"))
             files.append(self.override)
         return self.run([*self.prefix, *[part for file in files for part in ("-f", str(file))], *arguments], timeout)
 
@@ -259,13 +297,38 @@ class DockerStack:
         mounts = [m for m in data.get("Mounts", []) if m.get("Destination") == "/app/data"]
         if len(mounts) != 1 or mounts[0].get("Type") != "volume" or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]*", mounts[0].get("Name", "")):
             raise UpdateError("Automatyczna aktualizacja wymaga nazwanego woluminu danych VEKTORA.")
-        return {"id": identifier, "image": image, "volume": mounts[0]["Name"]}
+        diffusion_image = None
+        if self.override.exists():
+            diffusion_image = parse_managed_override(self.override.read_text(encoding="ascii"))["diffusion"]
+        if not diffusion_image:
+            env_path = safe_path(self.root, ".env")
+            if env_path.is_file():
+                values = [line.partition("=")[2].strip() for line in env_path.read_text(encoding="utf-8-sig").splitlines() if line.startswith("DIFFUSION_IMAGE=")]
+                if len(values) == 1 and (DIFFUSION_IMAGE_RE.fullmatch(values[0]) or re.fullmatch(r"sha256:[a-f0-9]{64}", values[0])):
+                    diffusion_image = values[0]
+        if self.gpu_enabled:
+            diffusion_id = self.compose("ps", "-a", "-q", "stable-diffusion", timeout=20).strip()
+            if not re.fullmatch(r"[a-f0-9]{12,64}", diffusion_id):
+                raise UpdateError("Nie znaleziono lokalnego generatora obrazów tej instalacji.")
+            diffusion_data = json.loads(self.run(["inspect", diffusion_id], 20))[0]
+            diffusion_labels = diffusion_data.get("Config", {}).get("Labels", {}) or {}
+            if diffusion_labels.get("com.docker.compose.service") != "stable-diffusion":
+                raise UpdateError("Kontener generatora obrazów nie należy do tej instalacji VEKTORA.")
+            diffusion_image = diffusion_data.get("Image", "")
+            if not re.fullmatch(r"sha256:[a-f0-9]{64}", diffusion_image):
+                raise UpdateError("Nie można zachować poprzedniego obrazu generatora.")
+        return {"id": identifier, "image": image, "diffusion_image": diffusion_image, "volume": mounts[0]["Name"]}
 
     def download(self, release):
         self.run(["pull", release["image"]], 900)
         labels = json.loads(self.run(["image", "inspect", release["image"], "--format", "{{json .Config.Labels}}"], 30)) or {}
         if labels.get("org.opencontainers.image.version") != release["version"] or labels.get("org.vektor.update.protocol") != str(PROTOCOL):
             raise UpdateError("Pobrany obraz ma inną wersję lub nieobsługiwany protokół aktualizacji.")
+        if self.gpu_enabled and release.get("diffusion_image"):
+            self.run(["pull", release["diffusion_image"]], 1800)
+            diffusion_labels = json.loads(self.run(["image", "inspect", release["diffusion_image"], "--format", "{{json .Config.Labels}}"], 30)) or {}
+            if diffusion_labels.get("org.opencontainers.image.version") != release["version"] or diffusion_labels.get("org.vektor.diffusion.protocol") != "1":
+                raise UpdateError("Pobrany generator obrazów ma inną wersję lub nieobsługiwany protokół.")
 
     def daemon_ready(self):
         try:
@@ -273,19 +336,18 @@ class DockerStack:
         except UpdateError:
             return False
 
-    def pin(self, image):
-        if not IMAGE_RE.fullmatch(image) and not re.fullmatch(r"sha256:[a-f0-9]{64}", image):
-            raise UpdateError("Nieprawidłowy obraz do przypięcia.")
+    def pin(self, image, diffusion_image=None):
         safe_path(self.root, self.override.name)
         temporary = safe_path(self.root, "compose.update." + uuid4().hex + ".tmp")
         with temporary.open("x", encoding="ascii") as stream:
-            stream.write("# Managed by VEKTOR updater. Data and other services are unchanged.\nservices:\n  agent:\n    image: " + image + "\n")
+            stream.write(managed_override(image, diffusion_image))
             stream.flush()
             os.fsync(stream.fileno())
         os.replace(temporary, self.override)
 
     def start(self):
-        self.compose("up", "-d", "--no-deps", "--no-build", "--pull", "never", "--wait", "--wait-timeout", "120", "agent", timeout=150)
+        services = ["agent", "stable-diffusion"] if self.gpu_enabled else ["agent"]
+        self.compose("up", "-d", "--no-deps", "--no-build", "--pull", "never", "--wait", "--wait-timeout", "120", *services, timeout=150)
 
     def checkpoint(self, command, identifier):
         current = self.container()
@@ -322,7 +384,7 @@ class DockerStack:
             except (UpdateError, ValueError, KeyError, IndexError, TypeError):
                 pass  # Keep journal and app stopped; next recovery checks lease.
             raise
-        self.pin(transaction["previous_image"])
+        self.pin(transaction["previous_image"], transaction.get("previous_diffusion_image"))
         self.start()
 
 
@@ -502,16 +564,17 @@ class UpdateManager:
         if self.busy(current) or current.get("idle_seconds", 0) < idle_seconds:
             self.phase("waiting", "Czekam na bezczynność oraz zakończenie zadań i zgód we wszystkich projektach.")
             return
-        if self.downloaded != release["image"]:
-            self.phase("downloading", "Pobieram i weryfikuję obraz. Możesz nadal korzystać z aplikacji.")
+        release_images = (release["image"], release.get("diffusion_image") if getattr(self.stack, "gpu_enabled", False) else None)
+        if self.downloaded != release_images:
+            self.phase("downloading", "Pobieram i weryfikuję obrazy. Możesz nadal korzystać z aplikacji.")
             self.stack.download(release)
-            self.downloaded = release["image"]
+            self.downloaded = release_images
         if not manual and not self.settings["auto_install"]:
             self.phase("available", "Obraz jest gotowy. Automatyczna instalacja została wyłączona.")
             return
         previous = self.stack.container()
         identifier = uuid4().hex
-        transaction = {"id": identifier, "previous_image": previous["image"], "previous_version": current["version"],
+        transaction = {"id": identifier, "previous_image": previous["image"], "previous_diffusion_image": previous.get("diffusion_image"), "previous_version": current["version"],
                        "volume": previous["volume"], "release": release, "checkpoint_ready": False, "switched": False, "committed": False, "restored": False}
         atomic_json(self.transaction_path, transaction)
         try:
@@ -529,7 +592,7 @@ class UpdateManager:
             self.phase("installing", "Instaluję nową wersję. Okno połączy się ponownie automatycznie.")
             transaction["switched"] = True
             atomic_json(self.transaction_path, transaction)
-            self.stack.pin(release["image"])
+            self.stack.pin(release["image"], release.get("diffusion_image"))
             self.stack.start()
             self.phase("verifying", "Sprawdzam uruchomienie nowej wersji i integralność zachowanych danych.")
             self.app.ready(release["version"])
@@ -591,7 +654,7 @@ class UpdateManager:
             raise UpdateError("Nieprawidłowy stan finalizacji aktualizacji.")
         version_tuple(transaction["previous_version"])
         release = transaction["release"]
-        validate_release({"version": release["version"], "agentImage": release["image"], "updateProtocol": release["protocol"]}, "v" + release["version"])
+        validate_release({"version": release["version"], "agentImage": release["image"], "diffusionImage": release.get("diffusion_image"), "updateProtocol": release["protocol"]}, "v" + release["version"])
         if transaction.get("committed"):
             self._resume_finalized_app(release["version"])
             self._finish(transaction)

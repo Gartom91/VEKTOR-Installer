@@ -1,4 +1,20 @@
-# VEKTOR Windows 1.7.0 — odzyskiwanie, kontekst i edycja wyników
+# VEKTOR Windows 1.8.0 — lokalny Stable Diffusion
+
+- Lokalny generator **Stable Diffusion XL** działa jako osobny, izolowany kontener GPU. Obsługuje text-to-image i img2img, pokazuje postęp w czacie i zapisuje wynik jako zwykły artefakt z podglądem, otwieraniem i pobieraniem.
+- Domyślny szybki model to SDXL Turbo. Klasyczny SDXL Base jest dostępny do świadomego pobrania. Użytkownik widzi rozmiar, licencję i stan modelu; pobranie kilku GB wymaga potwierdzenia i można je anulować.
+- Ustawienia obejmują model, wymiary, liczbę kroków, guidance, seed, siłę img2img, urządzenie, tryb pamięci i timeout. Profile są walidowane — np. Turbo nie przyjmuje CFG ani negative prompt — a naprawiona późniejsza próba nie blokuje całego wyniku.
+- Generator nie ma dostępu do bazy rozmów ani całego workspace. Dostaje uwierzytelnione, ograniczone żądanie oraz kontrolowaną kopię obrazu wejściowego; nie uruchamia kodu ani dowolnych ścieżek. Proces generowania kończy się po zadaniu, zwalniając VRAM dla Ollamy.
+- Instalator uruchamia generator tylko po rzeczywistym teście NVIDIA w Dockerze. Komputer bez działającego GPU zachowuje VEKTORA i Ollamę bez pobierania ciężkiego obrazu generatora. Modele są trzymane w osobnym, trwałym woluminie.
+- Protokół aktualizacji 2 wiąże po SHA256 zarówno obraz VEKTORA, jak i generatora. Starszy moduł bezpiecznie wymaga jednorazowego uruchomienia instalatora 1.8.0; kolejne zgodne aktualizacje zachowują modele i potrafią cofnąć oba obrazy.
+
+## Weryfikacja 1.8.0
+
+- Rzeczywiste generowanie na RTX 5070 Laptop: txt2img 512×512 i img2img z zachowaniem oryginału, poprawne PNG, kontrola SHA256 i pełne dekodowanie. Po zakończeniu VRAM wrócił do stanu spoczynkowego.
+- Pełny backend Windows: **523 PASS / 2 SKIP**; UI: **127 PASS**, poprawny build TypeScript/Vite oraz ESLint bez błędów. Testy instalatora PowerShell 5.1 i spójności przypięć obu obrazów również przeszły.
+- Docker Scout: **0 critical / 0 high** w sidecarze bez wyjątków oraz **0 / 0** w obrazie aplikacji po poprawkach i uwzględnieniu dwóch publicznych ocen OpenVEX dla narzędzi `tiffcrop` i `libgstogg.so`, których obraz runtime nie zawiera.
+- Nie obiecujemy identycznej szybkości ani jakości na każdym GPU. Pierwsze pobranie modelu wymaga internetu i wolnego miejsca; generowanie lokalne nie zastępuje generatora OpenAI, który pozostaje osobnym wyborem.
+
+## VEKTOR Windows 1.7.0 — odzyskiwanie, kontekst i edycja wyników
 
 - Trwałe punkty kontynuacji, zaakceptowane wywołania i wyniki narzędzi. Restart zachowuje zadanie i budżet; potwierdzone operacje nie są powtarzane. Niepewne skutki zapisu wymagają jawnej decyzji: pominąć ponowienie, świadomie ponowić lub zatrzymać. Brak obietnicy atomowości zewnętrznych usług.
 - **Zmiany zadania**: podgląd różnic, wybór plików i przywracanie z ochroną przed nadpisaniem późniejszych zmian. Kopie są ograniczone do katalogu projektu i limitów dysku; pliki pominięte są widoczne. Operacje poza katalogiem, wiadomości i instalacje nie są cofane.

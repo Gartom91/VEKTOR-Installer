@@ -19,11 +19,12 @@ Program i modele lokalne działają bez instalowania Pythona, Node.js czy .NET n
 
 ## Powtarzalność i sprzęt
 
-VEKTOR i Ollama są dwoma kontenerami jednego projektu Compose `vektor-desktop`, przypiętymi po SHA256 w `payload/release.json`. To te same funkcje aplikacji, ale nie gwarancja identycznej szybkości ani odpowiedzi generatywnych na różnym sprzęcie.
+VEKTOR, Ollama oraz — na zgodnym GPU NVIDIA — lokalny generator Stable Diffusion są usługami jednego projektu Compose `vektor-desktop`, przypiętymi po SHA256 w `payload/release.json`. To te same funkcje aplikacji, ale nie gwarancja identycznej szybkości ani odpowiedzi generatywnych na różnym sprzęcie.
 
 - NVIDIA jest najpierw sprawdzana w kontenerze; brak działającego GPU powoduje jawny fallback do CPU.
 - Dobór lokalnego modelu: 8 GB RAM bez GPU → qwen3:1.7b; 16 GB+ RAM / GPU 4 GB → qwen3:4b; GPU 6 GB+ → qwen3:8b. Kontekst 4096–16384 zależnie od VRAM.
 - Lokalny Vision: gemma3:4b. Tylko jeden model lokalny załadowany jednocześnie, lokalny swarm wyłączony.
+- Lokalne obrazy: SDXL Turbo (szybki) i opcjonalny SDXL Base (jakościowy), pobierane dopiero po potwierdzeniu. Sidecar jest włączany wyłącznie po udanym teście NVIDIA w Dockerze; na CPU ta funkcja pozostaje wyłączona, a reszta VEKTORA działa normalnie.
 - Cloud: domyślny model główny **glm-5.3:cloud**, specjalista Vision **glm-5.3-flash:cloud**. Wymagają własnego logowania i dostępności w Ollamie. Obie role można zmienić w ustawieniach aplikacji.
 - Obraz jest analizowany pod kątem pytania użytkownika; model główny dostaje walidowany raport OCR/obserwacji/niepewności i może dopytać o wycinek oryginału. Raporty, oryginały i linki pobierania pozostają w chacie. Domyślnie dwie dodatkowe rundy, limit konfigurowalny 0–8.
 - VEKTOR ogranicza łącznie wywołania modeli Ollama cloud do trzech naraz. W trybie lokalnym pomija cloud i Swarm; modele lokalne są uruchamiane pojedynczo. Limity konta zużywane przez inne aplikacje pozostają niezależne.
@@ -37,7 +38,7 @@ Od 1.6.0 **Ustawienia → Aktualizacje VEKTORA** oferują automatyczne sprawdzan
 
 Automatyczny updater zapisuje kopię **wszystkich** baz i plików woluminu danych w `/app/data/backups/updates/`, weryfikuje SHA256 manifestu GitHub, przypięty obraz i zachowanie danych. Błąd kontroli uruchamia rollback, a nie kolejne próby wadliwego wydania. Po przerwaniu pracy pozostaje dziennik w `data/updater/`. Jeśli wyłączony Docker, wygasła blokada lub uszkodzony dysk uniemożliwiają bezpieczny rollback, updater zatrzymuje się z informacją diagnostyczną. Kopie pozostają do ręcznego przeglądu i zajmują miejsce.
 
-Zmienia się tylko kontener `agent`, bez wymiany Dockera, Ollamy i pobranych modeli. Zewnętrzny workspace pozostaje nietknięty. Moduł Windows wymaga nowszego instalatora przy zmianie protokołu. **Sama aktualizacja nie daje agentowi dostępu do pulpitu/plików ani praw administratora.** Wymagany standardowy nazwany wolumin danych, bez niestandardowych plików Compose/dowiązań. Wydania prerelease i samo przesunięcie Docker `latest` nie uruchamiają aktualizacji.
+Protokół 2 aktualizuje przypięty kontener `agent` oraz, na komputerze z GPU, kontener `stable-diffusion`; nie wymienia Dockera, Ollamy ani pobranych modeli. Zewnętrzny workspace pozostaje nietknięty. Moduł Windows wymaga nowszego instalatora przy zmianie protokołu. **Sama aktualizacja nie daje agentowi dostępu do pulpitu/plików ani praw administratora.** Wymagany standardowy nazwany wolumin danych, bez niestandardowych plików Compose/dowiązań. Wydania prerelease i samo przesunięcie Docker `latest` nie uruchamiają aktualizacji.
 
 Użyj nowszego instalatora z tym samym folderem. Ustawienia istniejącej instalacji mają pierwszeństwo przed domyślnymi opcjami kreatora. Nie odinstalowuj Docker Desktop i nie używaj `docker system prune --volumes`, jeśli chcesz zachować dane.
 
@@ -61,6 +62,6 @@ Wymagane .NET 10 SDK i Python 3.12 wyłącznie na komputerze budującym.
 ./test-payload.ps1
 ```
 
-Tag `v*` uruchamia GitHub Actions, buduje instalator, wykonuje testy, zapisuje sumy SHA256 i publikuje EXE oraz `release.json` w GitHub Releases. Aktualizacja wersji aplikacji wymaga wcześniejszej publikacji obrazu i zmiany przypiętego digestu w `payload/release.json`; manifest zawiera `updateProtocol: 1`. Repozytoria GitHub i Docker Hub są granicą zaufania wydawcy — SHA256 nie zastępuje niezależnego podpisu kryptograficznego.
+Tag `v*` uruchamia GitHub Actions, buduje instalator, wykonuje testy, zapisuje sumy SHA256 i publikuje EXE oraz `release.json` w GitHub Releases. Aktualizacja wersji aplikacji wymaga wcześniejszej publikacji obu obrazów i zmiany przypiętych digestów w `payload/release.json`; manifest zawiera `updateProtocol: 2`. Repozytoria GitHub i Docker Hub są granicą zaufania wydawcy — SHA256 nie zastępuje niezależnego podpisu kryptograficznego.
 
 Źródła wymagań: [Docker Windows](https://docs.docker.com/desktop/setup/install/windows-install/), [WSL](https://learn.microsoft.com/windows/wsl/install), [Ollama Docker](https://docs.ollama.com/docker), [Ollama cloud](https://docs.ollama.com/cloud).
