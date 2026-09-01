@@ -1,3 +1,17 @@
+# VEKTOR Windows 1.8.1 — bezpieczne domykanie generowania obrazów
+
+- Agent kończy zwykłe zlecenie po najwyżej dwóch natywnych generacjach: pierwszym obrazie i jednej autonomicznej korekcie. Jawnie zamówione serie i warianty nadal zachowują wskazaną liczbę wyników.
+- Po osiągnięciu limitu VEKTOR wybiera najlepszy istniejący artefakt i przedstawia odpowiedź końcową zamiast bez końca poprawiać obraz.
+- Zablokowano obchodzenie natywnego generatora przez rysowanie obrazu lub „referencji” w Pythonie, shellu, SVG, Matplotlib, Pillow, OpenCV albo podobnym kodzie. Odczyt i techniczna kontrola obrazu nadal są dozwolone.
+- Chronologia czatu pokazuje, że limit iteracji zadziałał. Oryginalny wynik i dopuszczona korekta pozostają dostępne jako zwykłe artefakty.
+- Instalator przypina po SHA256 zarówno VEKTORA, jak i lokalny generator Stable Diffusion 1.8.1; modele i dane użytkownika pozostają w trwałych woluminach.
+
+## Weryfikacja 1.8.1
+
+- Pełny backend: **529 PASS / 2 SKIP**; UI: **127 PASS**, produkcyjny build poprawny, ESLint bez błędów. Dodano regresje limitu generowania oraz wykrywania syntezy obrazów przez kod.
+- Rzeczywisty test E2E na RTX 5070 Laptop z trudnym promptem zakończył się po dwóch natywnych generacjach, bez Pythona. Końcowy PNG 512×512 został poprawnie otwarty i pobrany; druga wersja przeszła analizę Vision.
+- Docker Scout dla obu finalnych obrazów: **0 critical / 0 high**. Główny obraz zawiera powiązane z wydaniem oświadczenie OpenVEX.
+
 # VEKTOR Windows 1.8.0 — lokalny Stable Diffusion
 
 - Lokalny generator **Stable Diffusion XL** działa jako osobny, izolowany kontener GPU. Obsługuje text-to-image i img2img, pokazuje postęp w czacie i zapisuje wynik jako zwykły artefakt z podglądem, otwieraniem i pobieraniem.
